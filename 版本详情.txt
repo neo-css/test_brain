@@ -1,0 +1,375 @@
+{
+  "patchId": 64460,
+  "totalScore": 78.50,
+  "qualityScore": 3.82,
+  "behaviorScore": 2.75,
+  "riskLevel": "LOW",
+  "snapshotsTs": "2026-06-23T09:30:00",
+  "sysId": "TED",
+  "subNamedSystemName": "测试大脑系统",
+  "systemKeyId": 10001,
+  "systemLevel": "第四级",
+  "teamName": "质量保障部",
+  "patchOwner": "张三",
+  "patchOwnerAccount": "zhangsan",
+  "testLeader": "李四",
+  "testLeaderAccount": "lisi",
+  "devLeader": "王五",
+  "devLeaderAccount": "wangwu",
+  "actualSubmitTestTime": "2026-06-10 14:00:00",
+  "actualTestFromTime": "2026-06-10 15:00:00",
+  "actualTestToTime": "2026-06-18 18:00:00",
+  "planedTestFromTime": "2026-06-09 09:00:00",
+  "planedTestToTime": "2026-06-17 18:00:00",
+  "auditTime": "2026-06-08 16:30:00",
+  "summary": "TED系统 v2.3 迭代发布，新增智能测试模块、覆盖率数据采集优化、评分引擎重构",
+  "status": "测试中",
+  "releaseType": "迭代发布",
+  "metrics": [
+    {
+      "metricCode": "CHANGES_RISK",
+      "metricName": "版本变更风险",
+      "phase": "ADMISSION",
+      "phaseName": "准入阶段",
+      "dataDimension": "PERSONNEL_RELATED",
+      "dataDimensionName": "人员相关",
+      "evalTarget": "VERSION_QUALITY",
+      "evalTargetName": "版本质量",
+      "calcScore": 4.4,
+      "actualScore": 4.4,
+      "riskLevel": "LOW",
+      "features": {
+        "summaryReqConsistent": true,
+        "summaryReqDiffCount": 0,
+        "summaryCodeConsistent": false,
+        "summaryCodeDiffCount": 2,
+        "score": 4.4
+      },
+      "description": "",
+      "detailUrl": ""
+    },
+    {
+      "metricCode": "CASE_REVIEW_TIMELINESS",
+      "metricName": "案例评审时效",
+      "phase": "PRE_TEST",
+      "phaseName": "测前阶段",
+      "dataDimension": "CASE_RELATED",
+      "dataDimensionName": "用例相关",
+      "evalTarget": "TEST_BEHAVIOR",
+      "evalTargetName": "测试行为",
+      "calcScore": 3.0,
+      "actualScore": 3.0,
+      "riskLevel": "MEDIUM",
+      "features": {
+        "reviewTime": "2026-06-08 16:30:00",
+        "testStartTime": "2026-06-09 09:00:00",
+        "delayDays": 2
+      },
+      "description": "",
+      "detailUrl": ""
+    },
+    {
+      "metricCode": "DEFECT_RISK",
+      "metricName": "版本缺陷风险",
+      "phase": "TEST_EXECUTION",
+      "phaseName": "测试执行阶段",
+      "dataDimension": "DEFECT_RELATED",
+      "dataDimensionName": "缺陷相关",
+      "evalTarget": "VERSION_QUALITY",
+      "evalTargetName": "版本质量",
+      "calcScore": 3.2,
+      "actualScore": 3.2,
+      "riskLevel": "MEDIUM",
+      "features": {
+        "defectNum": 3,
+        "testStartDate": "2026-06-10",
+        "testEndDate": "2026-06-18",
+        "testDay": 13,
+        "totalDays": 9
+      },
+      "description": "",
+      "detailUrl": ""
+    },
+    {
+      "metricCode": "SMART_TEST",
+      "metricName": "智能测试渗透率",
+      "phase": "TEST_EXECUTION",
+      "phaseName": "测试执行阶段",
+      "dataDimension": "PERSONNEL_RELATED",
+      "dataDimensionName": "人员相关",
+      "evalTarget": "TEST_BEHAVIOR",
+      "evalTargetName": "测试行为",
+      "calcScore": 3,
+      "actualScore": 3.0,
+      "riskLevel": "MEDIUM",
+      "features": {
+        "clickCounts": {
+          "案例生成": 1,
+          "案例评审": 1,
+          "缺陷分析": 1
+        }
+      },
+      "description": "",
+      "detailUrl": ""
+    },
+    {
+      "metricCode": "COVERAGE_390",
+      "metricName": "390回归测试覆盖率",
+      "phase": "RELEASE",
+      "phaseName": "发布阶段",
+      "dataDimension": "COVERAGE_RELATED",
+      "dataDimensionName": "覆盖率相关",
+      "evalTarget": "VERSION_QUALITY",
+      "evalTargetName": "版本质量",
+      "calcScore": 4.25,
+      "actualScore": 4.25,
+      "riskLevel": "LOW",
+      "features": {
+        "num": 800,
+        "cover": 680,
+        "coverageRate": 0.8500,
+        "coverType": "ARCH_ASSET"
+      },
+      "description": "",
+      "detailUrl": ""
+    },
+    {
+      "metricCode": "COVERAGE_FUNCTION",
+      "metricName": "变更函数测试覆盖率",
+      "phase": "RELEASE",
+      "phaseName": "发布阶段",
+      "dataDimension": "COVERAGE_RELATED",
+      "dataDimensionName": "覆盖率相关",
+      "evalTarget": "VERSION_QUALITY",
+      "evalTargetName": "版本质量",
+      "calcScore": 3.0,
+      "actualScore": 3.0,
+      "riskLevel": "MEDIUM",
+      "features": {
+        "appLevel": "第四级",
+        "javaCoverageInfo": {
+          "cover": 156,
+          "num": 200,
+          "deletedNum": 10,
+          "artificialNum": 5,
+          "filterNum": 8,
+          "coverState": "ALL_OPENED",
+          "description": "all opened"
+        },
+        "cCoverageInfo": {
+          "cover": 42,
+          "num": 103,
+          "deletedNum": 2,
+          "artificialNum": 0,
+          "filterNum": 3,
+          "coverState": "ALL_OPENED",
+          "description": "all opened"
+        }
+      },
+      "description": "",
+      "detailUrl": ""
+    }
+  ],
+  "byPhase": [
+    {
+      "key": "ADMISSION",
+      "displayName": "准入阶段",
+      "groupScore": 4.4,
+      "metrics": [
+        {
+          "metricCode": "CHANGES_RISK",
+          "metricName": "版本变更风险",
+          "calcScore": 4.4,
+          "actualScore": 4.4,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "PRE_TEST",
+      "displayName": "测前阶段",
+      "groupScore": 3.0,
+      "metrics": [
+        {
+          "metricCode": "CASE_REVIEW_TIMELINESS",
+          "metricName": "案例评审时效",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "TEST_EXECUTION",
+      "displayName": "测试执行阶段",
+      "groupScore": 6.2,
+      "metrics": [
+        {
+          "metricCode": "DEFECT_RISK",
+          "metricName": "版本缺陷风险",
+          "calcScore": 3.2,
+          "actualScore": 3.2,
+          "description": ""
+        },
+        {
+          "metricCode": "SMART_TEST",
+          "metricName": "智能测试渗透率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "RELEASE",
+      "displayName": "发布阶段",
+      "groupScore": 7.25,
+      "metrics": [
+        {
+          "metricCode": "COVERAGE_390",
+          "metricName": "390回归测试覆盖率",
+          "calcScore": 4.25,
+          "actualScore": 4.25,
+          "description": ""
+        },
+        {
+          "metricCode": "COVERAGE_FUNCTION",
+          "metricName": "变更函数测试覆盖率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "byDataDimension": [
+    {
+      "key": "PERSONNEL_RELATED",
+      "displayName": "人员相关",
+      "groupScore": 7.4,
+      "metrics": [
+        {
+          "metricCode": "CHANGES_RISK",
+          "metricName": "版本变更风险",
+          "calcScore": 4.4,
+          "actualScore": 4.4,
+          "description": ""
+        },
+        {
+          "metricCode": "SMART_TEST",
+          "metricName": "智能测试渗透率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "CASE_RELATED",
+      "displayName": "用例相关",
+      "groupScore": 3.0,
+      "metrics": [
+        {
+          "metricCode": "CASE_REVIEW_TIMELINESS",
+          "metricName": "案例评审时效",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "DEFECT_RELATED",
+      "displayName": "缺陷相关",
+      "groupScore": 3.2,
+      "metrics": [
+        {
+          "metricCode": "DEFECT_RISK",
+          "metricName": "版本缺陷风险",
+          "calcScore": 3.2,
+          "actualScore": 3.2,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "COVERAGE_RELATED",
+      "displayName": "覆盖率相关",
+      "groupScore": 7.25,
+      "metrics": [
+        {
+          "metricCode": "COVERAGE_390",
+          "metricName": "390回归测试覆盖率",
+          "calcScore": 4.25,
+          "actualScore": 4.25,
+          "description": ""
+        },
+        {
+          "metricCode": "COVERAGE_FUNCTION",
+          "metricName": "变更函数测试覆盖率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    }
+  ],
+  "byEvalTarget": [
+    {
+      "key": "VERSION_QUALITY",
+      "displayName": "版本质量",
+      "groupScore": 14.85,
+      "metrics": [
+        {
+          "metricCode": "CHANGES_RISK",
+          "metricName": "版本变更风险",
+          "calcScore": 4.4,
+          "actualScore": 4.4,
+          "description": ""
+        },
+        {
+          "metricCode": "DEFECT_RISK",
+          "metricName": "版本缺陷风险",
+          "calcScore": 3.2,
+          "actualScore": 3.2,
+          "description": ""
+        },
+        {
+          "metricCode": "COVERAGE_390",
+          "metricName": "390回归测试覆盖率",
+          "calcScore": 4.25,
+          "actualScore": 4.25,
+          "description": ""
+        },
+        {
+          "metricCode": "COVERAGE_FUNCTION",
+          "metricName": "变更函数测试覆盖率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    },
+    {
+      "key": "TEST_BEHAVIOR",
+      "displayName": "测试行为",
+      "groupScore": 6.0,
+      "metrics": [
+        {
+          "metricCode": "CASE_REVIEW_TIMELINESS",
+          "metricName": "案例评审时效",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        },
+        {
+          "metricCode": "SMART_TEST",
+          "metricName": "智能测试渗透率",
+          "calcScore": 3.0,
+          "actualScore": 3.0,
+          "description": ""
+        }
+      ]
+    }
+  ]
+}
