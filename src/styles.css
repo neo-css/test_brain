@@ -170,6 +170,7 @@ button {
 /* ===== Theme Switcher ===== */
 .theme-switcher {
   display: flex;
+  flex-shrink: 0;
   gap: 4px;
   padding: 3px;
   border: 1px solid var(--c-border);
@@ -750,8 +751,13 @@ button {
 .detail-header-right {
   display: flex;
   align-items: flex-start;
-  justify-content: space-between;
   gap: 16px;
+  min-width: 0;
+}
+
+.detail-title-block {
+  flex: 1;
+  min-width: 0;
 }
 
 .back-link {
@@ -770,6 +776,7 @@ button {
   margin: 0;
   font-size: clamp(26px, 3.8vw, 42px);
   line-height: 1.18;
+  overflow-wrap: anywhere;
 }
 
 .detail-tags {
