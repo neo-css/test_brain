@@ -1,4 +1,5 @@
 import { useMemo, useState } from 'react';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import VersionRowCard from '../components/VersionRowCard';
 import { versionDetails } from '../data/versionMock';
 import {
@@ -29,9 +30,12 @@ function VersionListPage() {
           <p className="eyebrow">IN-TEST VERSIONS</p>
           <h1>在测版本态势列表</h1>
         </div>
-        <div className="list-count">
-          <span>当前在测</span>
-          <strong>{versionDetails.length}</strong>
+        <div className="list-header-actions">
+          <ThemeSwitcher />
+          <div className="list-count">
+            <span>当前在测</span>
+            <strong>{versionDetails.length}</strong>
+          </div>
         </div>
       </section>
 

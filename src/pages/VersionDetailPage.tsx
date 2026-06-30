@@ -2,9 +2,11 @@ import { ArrowLeft, CalendarClock, Cpu, GitBranch, UsersRound } from 'lucide-rea
 import { Link, useParams } from 'react-router-dom';
 import InfoPanel from '../components/InfoPanel';
 import MetricRiskList from '../components/MetricRiskList';
+import MetricScoreCards from '../components/MetricScoreCards';
 import PhaseScoreBars from '../components/PhaseScoreBars';
 import RadarChart from '../components/RadarChart';
 import ScoreHero from '../components/ScoreHero';
+import ThemeSwitcher from '../components/ThemeSwitcher';
 import { formatDateTime, getVersionByPatchId } from '../data/versionMock';
 
 function VersionDetailPage() {
@@ -25,52 +27,60 @@ function VersionDetailPage() {
   const smartMetric = version.metrics.find((metric) => metric.metricCode === 'SMART_TEST');
 
   return (
-      <main className="page-shell detail-page cockpit-page">
+    <main className="page-shell detail-page cockpit-page">
+      {/* Header */}
       <header className="detail-header">
         <Link className="back-link" to="/"><ArrowLeft size={18} aria-hidden="true" />返回列表</Link>
-        <div className="detail-title-block">
-          <p className="eyebrow">VERSION COCKPIT</p>
-          <h1>{version.summary}</h1>
-          <div className="detail-tags">
-            <span>{version.status}</span>
-            <span>{version.releaseType}</span>
-            <span>{formatDateTime(version.snapshotsTs)}</span>
+        <div className="detail-header-right">
+          <div className="detail-title-block">
+            <p className="eyebrow">VERSION COCKPIT</p>
+            <h1>{version.summary}</h1>
+            <div className="detail-tags">
+              <span>{version.status}</span>
+              <span>{version.releaseType}</span>
+              <span>{formatDateTime(version.snapshotsTs)}</span>
+            </div>
           </div>
+          <ThemeSwitcher />
         </div>
       </header>
 
-      <section className="detail-grid-main">
-        <ScoreHero version={version} />
-        <InfoPanel title="版本身份" kicker="SYSTEM">
-          <div className="identity-grid">
-            <span><Cpu size={16} aria-hidden="true" />{version.subNamedSystemName}</span>
-            <span><GitBranch size={16} aria-hidden="true" />{version.sysId} / {version.systemLevel}</span>
-            <span><UsersRound size={16} aria-hidden="true" />{version.teamName}</span>
-            <span><CalendarClock size={16} aria-hidden="true" />审计 {formatDateTime(version.auditTime)}</span>
-          </div>
-        </InfoPanel>
+      {/* Score Hero */}
+      <ScoreHero version={version} />
+
+      {/* Identity Bar */}
+      <section className="identity-bar" aria-label="版本身份">
+        <span><Cpu size={15} aria-hidden="true" />{version.subNamedSystemName}</span>
+        <span className="identity-sep" aria-hidden="true" />
+        <span><GitBranch size={15} aria-hidden="true" />{version.sysId} / {version.systemLevel}</span>
+        <span className="identity-sep" aria-hidden="true" />
+        <span><UsersRound size={15} aria-hidden="true" />{version.teamName}</span>
+        <span className="identity-sep" aria-hidden="true" />
+        <span>负责人 {version.patchOwner} / 测试 {version.testLeader}</span>
+        <span className="identity-sep" aria-hidden="true" />
+        <span><CalendarClock size={15} aria-hidden="true" />审计 {formatDateTime(version.auditTime)}</span>
       </section>
 
-      <section className="detail-grid-two">
-        <InfoPanel title="阶段多边形指标" kicker="PHASE RADAR" className="radar-panel">
+      {/* Chart Zone */}
+      <section className="chart-zone">
+        <InfoPanel title="阶段雷达" kicker="RADAR">
           <RadarChart groups={version.byPhase} />
         </InfoPanel>
-        <InfoPanel title="阶段得分" kicker="PHASE SCORE">
+        <InfoPanel title="阶段得分" kicker="BARS">
           <PhaseScoreBars groups={version.byPhase} />
+        </InfoPanel>
+        <InfoPanel title="指标得分卡" kicker="SCORES">
+          <MetricScoreCards version={version} />
         </InfoPanel>
       </section>
 
-      <section className="detail-grid-two detail-grid-bottom">
+      {/* Bottom Zone */}
+      <section className="bottom-zone">
         <InfoPanel title="指标风险清单" kicker="METRICS">
           <MetricRiskList version={version} />
         </InfoPanel>
         <InfoPanel title="执行摘要" kicker="OPERATIONS">
           <div className="operation-grid">
-            <div>
-              <span>负责人</span>
-              <strong>{version.patchOwner}</strong>
-              <em>测试 {version.testLeader} / 开发 {version.devLeader}</em>
-            </div>
             <div>
               <span>实际周期</span>
               <strong>{formatDateTime(version.actualTestFromTime)}</strong>
