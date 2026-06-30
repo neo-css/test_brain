@@ -124,7 +124,14 @@ function DynamicTopology({
   const wrapRef = useRef<HTMLDivElement>(null);
   const layoutRef = useRef<ReturnType<typeof buildLayout> | null>(null);
   const hoverRef = useRef<TopoNode | null>(null);
+  const viewRef = useRef({ scale: 1, x: 0, y: 0 });
+  const dragRef = useRef<
+    | { mode: 'pan'; x: number; y: number; moved: boolean }
+    | { mode: 'node'; node: TopoNode; x: number; y: number; moved: boolean }
+    | null
+  >(null);
   const [hover, setHover] = useState<TopoNode | null>(null);
+  const [, forceRender] = useState(0);
   const stars = useMemo(
     () => Array.from({ length: 80 }, (_, index) => ({
       x: (index * 37) % 100,
@@ -160,23 +167,28 @@ function DynamicTopology({
       const height = wrap.clientHeight;
       const layout = layoutRef.current;
       if (!layout) return;
+      const view = viewRef.current;
 
       ctx.clearRect(0, 0, width, height);
       const bg = ctx.createRadialGradient(width / 2, height / 2, 0, width / 2, height / 2, Math.max(width, height) * 0.62);
       bg.addColorStop(0, '#ffffff');
-      bg.addColorStop(0.62, '#f2fbfd');
-      bg.addColorStop(1, '#e7f3f8');
+      bg.addColorStop(0.58, '#f4fbfd');
+      bg.addColorStop(1, '#e8f4f8');
       ctx.fillStyle = bg;
       ctx.fillRect(0, 0, width, height);
 
       for (const star of stars) {
-        ctx.fillStyle = `rgba(61, 143, 170, ${star.alpha + Math.sin(time / 900 + star.x) * 0.04})`;
+        ctx.fillStyle = `rgba(61, 143, 170, ${star.alpha * 0.55 + Math.sin(time / 900 + star.x) * 0.025})`;
         ctx.beginPath();
         ctx.arc((star.x / 100) * width, (star.y / 100) * height, star.size, 0, Math.PI * 2);
         ctx.fill();
       }
 
       const pulse = (Math.sin(time / 700) + 1) / 2;
+      ctx.save();
+      ctx.translate(view.x, view.y);
+      ctx.scale(view.scale, view.scale);
+
       const centerGlow = ctx.createRadialGradient(layout.center.x, layout.center.y, 10, layout.center.x, layout.center.y, 82 + pulse * 14);
       centerGlow.addColorStop(0, 'rgba(102, 210, 205, 0.28)');
       centerGlow.addColorStop(1, 'rgba(102, 210, 205, 0)');
@@ -221,7 +233,7 @@ function DynamicTopology({
           ctx.stroke();
         }
         if (node.type === 'domain') {
-          ctx.fillStyle = '#244d5e';
+          ctx.fillStyle = '#315f72';
           ctx.font = '700 12px "Microsoft YaHei", sans-serif';
           ctx.textAlign = 'center';
           ctx.fillText(node.code, node.x, node.y + 4);
@@ -230,59 +242,158 @@ function DynamicTopology({
         }
       }
 
+      ctx.restore();
       frame = requestAnimationFrame(render);
     };
+
+    const toWorld = (x: number, y: number) => ({
+      x: (x - viewRef.current.x) / viewRef.current.scale,
+      y: (y - viewRef.current.y) / viewRef.current.scale,
+    });
 
     const hitTest = (x: number, y: number) => {
       const layout = layoutRef.current;
       if (!layout) return null;
+      const world = toWorld(x, y);
       for (let index = layout.nodes.length - 1; index >= 0; index--) {
         const node = layout.nodes[index];
-        if (Math.hypot(x - node.x, y - node.y) <= node.r + 7) return node;
+        if (Math.hypot(world.x - node.x, world.y - node.y) <= node.r + 7) return node;
       }
       return null;
     };
 
     const onMove = (event: MouseEvent) => {
       const rect = canvas.getBoundingClientRect();
-      const hit = hitTest(event.clientX - rect.left, event.clientY - rect.top);
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const drag = dragRef.current;
+
+      if (drag?.mode === 'pan') {
+        const dx = sx - drag.x;
+        const dy = sy - drag.y;
+        if (Math.abs(dx) + Math.abs(dy) > 2) drag.moved = true;
+        viewRef.current.x += dx;
+        viewRef.current.y += dy;
+        drag.x = sx;
+        drag.y = sy;
+        canvas.style.cursor = 'grabbing';
+        return;
+      }
+
+      if (drag?.mode === 'node') {
+        const world = toWorld(sx, sy);
+        const dx = world.x - drag.x;
+        const dy = world.y - drag.y;
+        if (Math.abs(dx) + Math.abs(dy) > 0.5) drag.moved = true;
+        drag.node.x += dx;
+        drag.node.y += dy;
+        drag.x = world.x;
+        drag.y = world.y;
+        canvas.style.cursor = 'grabbing';
+        return;
+      }
+
+      const hit = hitTest(sx, sy);
       hoverRef.current = hit;
       setHover(hit);
-      canvas.style.cursor = hit ? 'pointer' : 'default';
+      canvas.style.cursor = hit ? 'grab' : 'grab';
     };
 
-    const onClick = () => {
+    const onDown = (event: MouseEvent) => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const hit = hitTest(sx, sy);
+      if (hit) {
+        const world = toWorld(sx, sy);
+        dragRef.current = { mode: 'node', node: hit, x: world.x, y: world.y, moved: false };
+      } else {
+        dragRef.current = { mode: 'pan', x: sx, y: sy, moved: false };
+      }
+    };
+
+    const onUp = () => {
+      const drag = dragRef.current;
+      dragRef.current = null;
+      canvas.style.cursor = 'grab';
+      if (drag?.mode === 'node' && !drag.moved) {
+        const hit = drag.node;
+        if (hit.type === 'system') onSelectVersion?.(hit.patchId);
+        else {
+          onSelectVersion?.(null);
+          navigate('/versions', { state: { from: '/', fromLabel: '返回测试大脑' } });
+        }
+      }
+    };
+
+    const onLeave = () => {
+      dragRef.current = null;
+      hoverRef.current = null;
+      setHover(null);
+      canvas.style.cursor = 'grab';
+    };
+
+    const onWheel = (event: WheelEvent) => {
+      event.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const sx = event.clientX - rect.left;
+      const sy = event.clientY - rect.top;
+      const view = viewRef.current;
+      const world = toWorld(sx, sy);
+      const nextScale = Math.min(2.2, Math.max(0.58, view.scale * (event.deltaY > 0 ? 0.9 : 1.1)));
+      view.scale = nextScale;
+      view.x = sx - world.x * nextScale;
+      view.y = sy - world.y * nextScale;
+    };
+
+    const onDoubleClick = () => {
       const hit = hoverRef.current;
       if (!hit) return;
-      if (hit.type === 'system') onSelectVersion?.(hit.patchId);
-      else {
-        onSelectVersion?.(null);
-        navigate('/versions', { state: { from: '/', fromLabel: '返回测试大脑' } });
-      }
+      if (hit.type === 'system') navigate(`/versions/${hit.patchId}`, { state: { from: '/', fromLabel: '返回测试大脑' } });
     };
 
     resize();
     const observer = new ResizeObserver(resize);
     observer.observe(wrap);
+    canvas.style.cursor = 'grab';
     canvas.addEventListener('mousemove', onMove);
-    canvas.addEventListener('click', onClick);
+    canvas.addEventListener('mousedown', onDown);
+    window.addEventListener('mouseup', onUp);
+    canvas.addEventListener('mouseleave', onLeave);
+    canvas.addEventListener('wheel', onWheel, { passive: false });
+    canvas.addEventListener('dblclick', onDoubleClick);
     frame = requestAnimationFrame(render);
 
     return () => {
       cancelAnimationFrame(frame);
       observer.disconnect();
       canvas.removeEventListener('mousemove', onMove);
-      canvas.removeEventListener('click', onClick);
+      canvas.removeEventListener('mousedown', onDown);
+      window.removeEventListener('mouseup', onUp);
+      canvas.removeEventListener('mouseleave', onLeave);
+      canvas.removeEventListener('wheel', onWheel);
+      canvas.removeEventListener('dblclick', onDoubleClick);
     };
   }, [navigate, onSelectVersion, selectedPatchId, stars, versions]);
 
   return (
     <div ref={wrapRef} className="l1-dynamic-topology">
       <canvas ref={canvasRef} aria-label="测试大脑动态拓扑" />
+      <button
+        className="l1-topology-reset"
+        type="button"
+        onClick={() => {
+          viewRef.current = { scale: 1, x: 0, y: 0 };
+          layoutRef.current = wrapRef.current ? buildLayout(wrapRef.current.clientWidth, wrapRef.current.clientHeight, versions) : layoutRef.current;
+          forceRender((value) => value + 1);
+        }}
+      >
+        重置拓扑
+      </button>
       {hover ? (
         <div className="l1-topology-tip">
           <strong>{hover.name}</strong>
-          <span>{hover.type === 'system' ? `${hover.code} · 点击选中版本点` : `${hover.code} · 点击进入版本列表`}</span>
+          <span>{hover.type === 'system' ? `${hover.code} · 单击选中，双击详情，拖动调整` : `${hover.code} · 单击进入版本列表，拖动调整`}</span>
         </div>
       ) : null}
     </div>

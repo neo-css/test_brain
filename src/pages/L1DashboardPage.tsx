@@ -152,9 +152,22 @@ function L1DashboardPage() {
   return (
     <main className="l1-page">
       <header className="l1-header">
-        <Link to="/versions" state={fromHomeState}>20260608</Link>
-        <h1>测试大脑</h1>
-        <Link to="/versions" state={fromHomeState}>星期一</Link>
+        <Link className="l1-date-card" to="/versions" state={fromHomeState}>
+          <span>数据日期</span>
+          <strong>20260608</strong>
+        </Link>
+        <div className="l1-title-frame">
+          <span className="l1-title-wing" />
+          <div>
+            <h1>测试大脑</h1>
+            <p>Test Brain · L1 全域质量态势</p>
+          </div>
+          <span className="l1-title-wing" />
+        </div>
+        <Link className="l1-date-card l1-week-card" to="/versions" state={fromHomeState}>
+          <span>运行周期</span>
+          <strong>星期一</strong>
+        </Link>
       </header>
 
       <section className="l1-grid">

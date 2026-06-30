@@ -418,19 +418,105 @@ a {
   min-height: 720px;
   overflow: hidden;
   padding: 10px 14px 14px;
+  color: #172b35;
+  background:
+    radial-gradient(circle at 50% 36%, rgba(106, 188, 197, 0.16), transparent 32%),
+    radial-gradient(circle at 14% 8%, rgba(75, 156, 214, 0.13), transparent 24%),
+    linear-gradient(180deg, #ffffff 0%, #f8fbfb 100%);
 }
 
 .l1-header {
   max-width: none;
-  height: 62px;
-  margin: 0 0 10px;
+  height: 78px;
+  margin: 0 0 12px;
+  padding: 8px 0 0;
+  color: #122d39;
+  border-top-color: #7ca3ad;
+}
+
+.l1-date-card {
+  display: grid;
+  gap: 3px;
+  min-width: 148px;
+  padding: 9px 16px;
+  border: 1px solid rgba(106, 166, 189, 0.58);
+  border-radius: 12px;
+  background: rgba(255, 255, 255, 0.74);
+  box-shadow: 0 8px 24px rgba(47, 140, 197, 0.12);
+}
+
+.l1-date-card span {
+  color: #6693a1;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+}
+
+.l1-date-card strong {
+  color: #111f27;
+  font-size: 18px;
+}
+
+.l1-week-card {
+  text-align: right;
+}
+
+.l1-title-frame {
+  position: absolute;
+  left: 50%;
+  top: -2px;
+  display: flex;
+  align-items: center;
+  gap: 18px;
+  transform: translateX(-50%);
+}
+
+.l1-title-frame > div {
+  min-width: 430px;
+  padding: 10px 58px 12px;
+  border-right: 2px solid #7ca3ad;
+  border-bottom: 2px solid #7ca3ad;
+  border-left: 2px solid #7ca3ad;
+  clip-path: polygon(9% 0, 91% 0, 100% 100%, 0 100%);
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(239, 248, 251, 0.72));
+  text-align: center;
+  box-shadow: 0 10px 28px rgba(47, 140, 197, 0.12);
+}
+
+.l1-title-frame h1 {
+  position: static;
+  min-width: auto;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  clip-path: none;
+  color: #3d67a1;
+  font-size: 38px;
+  line-height: 1;
+  letter-spacing: 0.12em;
+  text-shadow: 2px 3px 0 rgba(108, 151, 198, 0.2);
+  transform: none;
+}
+
+.l1-title-frame p {
+  margin: 5px 0 0;
+  color: #6c98a6;
+  font-size: 12px;
+  letter-spacing: 0.16em;
+}
+
+.l1-title-wing {
+  width: 120px;
+  height: 30px;
+  border-top: 2px solid #7ca3ad;
+  opacity: 0.82;
+  transform: skewX(34deg);
 }
 
 .l1-grid {
   grid-template-columns: minmax(270px, 23vw) minmax(520px, 1fr) minmax(270px, 23vw);
   gap: 14px;
   max-width: none;
-  height: calc(100vh - 86px);
+  height: calc(100vh - 104px);
   min-height: 620px;
 }
 
@@ -450,11 +536,28 @@ a {
   min-height: 0;
   height: 100%;
   padding: 28px 14px 14px;
+  border-color: #6aa6bd;
+  color: #172b35;
+  background: rgba(255, 255, 255, 0.86);
+  box-shadow: 0 0 18px rgba(75, 156, 190, 0.16);
+}
+
+.l1-panel:hover {
+  border-color: #2f8cc5;
+  box-shadow: 0 10px 24px rgba(47, 140, 197, 0.18);
+}
+
+.l1-panel-title {
+  color: #fff;
+  background: linear-gradient(90deg, #2f8cc5, #79bed4);
+  box-shadow: 0 4px 12px rgba(47, 140, 197, 0.32);
 }
 
 .l1-chart {
   height: 100%;
   min-height: 0;
+  border-color: #d6e2e7;
+  background: rgba(255, 255, 255, 0.65);
 }
 
 .l1-bar-chart,
@@ -476,7 +579,14 @@ a {
   align-content: center;
   gap: clamp(14px, 2.4vh, 28px);
   padding: 10px 26px;
+  color: #020202;
   font-size: clamp(18px, 1.45vw, 24px);
+}
+
+.l1-coverage strong,
+.l1-change strong {
+  color: #d98745;
+  text-shadow: 1px 1px 0 rgba(126, 63, 30, 0.22);
 }
 
 .l1-topology-card {
@@ -485,11 +595,19 @@ a {
   min-height: 0;
   height: 100%;
   padding: 12px;
+  border-color: #6aa6bd;
+  background: rgba(255, 255, 255, 0.88);
+  box-shadow: 0 0 18px rgba(75, 156, 190, 0.18);
 }
 
 .l1-health {
   margin-bottom: 4px;
+  color: #6ebbb8;
   font-size: clamp(24px, 2.2vw, 34px);
+}
+
+.l1-health strong {
+  color: #4d94b0;
 }
 
 .l1-dynamic-topology {
@@ -518,7 +636,7 @@ a {
   border: 1px solid rgba(106, 166, 189, 0.62);
   border-radius: 10px;
   color: #1f3e4a;
-  background: rgba(255, 255, 255, 0.88);
+  background: rgba(255, 255, 255, 0.9);
   box-shadow: 0 8px 18px rgba(47, 140, 197, 0.14);
   font-size: 12px;
   pointer-events: none;
@@ -532,6 +650,33 @@ a {
 
 .l1-task {
   height: 100%;
+  border-color: #d6e2e7;
+  background: rgba(255, 255, 255, 0.65);
+}
+
+.l1-task p,
+.l1-hardware-bars,
+.l1-bar-item,
+.l1-l2-item {
+  color: #33444b;
+}
+
+.l1-topology-reset {
+  position: absolute;
+  right: 12px;
+  top: 12px;
+  z-index: 2;
+  border: 1px solid rgba(106, 166, 189, 0.62);
+  border-radius: 999px;
+  padding: 7px 12px;
+  color: #357f9b;
+  background: rgba(255, 255, 255, 0.82);
+  cursor: pointer;
+}
+
+.l1-topology-reset:hover {
+  color: #123744;
+  border-color: #2f8cc5;
 }
 
 button {
