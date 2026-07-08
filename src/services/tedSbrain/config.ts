@@ -14,10 +14,10 @@ export function trimTrailingSlash(value: string): string {
   return value.replace(/\/+$/, '');
 }
 
-export function getTedSbrainApiBaseUrl(env = readViteEnv()): string {
-  const configuredBaseUrl = env.VITE_TED_SBRAIN_API_BASE_URL?.trim();
+export function getTedSbrainApiBaseUrl(env: TedSbrainEnv = readViteEnv()): string {
+  const configured = env.VITE_TED_SBRAIN_API_BASE_URL?.trim();
 
-  return configuredBaseUrl ? trimTrailingSlash(configuredBaseUrl) : DEFAULT_TED_SBRAIN_API_BASE_URL;
+  return configured === '' ? '' : trimTrailingSlash(configured || DEFAULT_TED_SBRAIN_API_BASE_URL);
 }
 
 export function normalizeTedSbrainPath(path: string): string {
@@ -31,5 +31,8 @@ export function normalizeTedSbrainPath(path: string): string {
 }
 
 export function buildTedSbrainUrl(baseUrl: string, path: string): string {
-  return `${trimTrailingSlash(baseUrl)}${normalizeTedSbrainPath(path)}`;
+  const normalizedPath = normalizeTedSbrainPath(path);
+  const normalizedBase = trimTrailingSlash(baseUrl);
+
+  return normalizedBase ? `${normalizedBase}${normalizedPath}` : normalizedPath;
 }

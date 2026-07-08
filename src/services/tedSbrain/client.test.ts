@@ -17,6 +17,11 @@ describe('ted-sbrain API client', () => {
     );
   });
 
+  it('allows an empty API base URL for same-origin proxy mode', () => {
+    expect(getTedSbrainApiBaseUrl({ VITE_TED_SBRAIN_API_BASE_URL: '' })).toBe('');
+    expect(buildTedSbrainUrl('', '/health')).toBe('/ted-sbrain/health');
+  });
+
   it('builds real-compatible ted-sbrain paths', () => {
     expect(buildTedSbrainUrl('http://localhost:49152', '/metric/patches/123/score')).toBe(
       'http://localhost:49152/ted-sbrain/metric/patches/123/score',
@@ -52,6 +57,23 @@ describe('ted-sbrain API client', () => {
       message: 'patch not found',
       status: 404,
       result: false,
+    });
+  });
+
+  it('adds query parameters to relative proxy URLs', async () => {
+    const fetcher = vi.fn(async () =>
+      new Response(JSON.stringify({ result: true, message: 'success', data: [], criticalProcess: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const client = createTedSbrainClient({ baseUrl: '', fetcher });
+
+    await client.request('/scoreSnapshot/list', { query: { riskLevel: 'LOW' } });
+
+    expect(fetcher).toHaveBeenCalledWith('/ted-sbrain/scoreSnapshot/list?riskLevel=LOW', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
     });
   });
 

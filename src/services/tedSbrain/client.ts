@@ -36,9 +36,11 @@ export interface TedSbrainClient {
   request<T>(path: string, options?: TedSbrainRequestOptions): Promise<T>;
 }
 
-export function appendQuery(url: string, query: Record<string, QueryValue> = {}): string {
-  const parsedUrl = new URL(url);
+export function appendQuery(url: string, query: TedSbrainRequestOptions['query']): string {
+  if (!query) return url;
 
+  const isAbsolute = /^https?:\/\//.test(url);
+  const parsedUrl = new URL(url, isAbsolute ? undefined : 'http://local.proxy');
   Object.entries(query).forEach(([key, value]) => {
     if (value === undefined || value === null || value === '') {
       return;
@@ -47,7 +49,7 @@ export function appendQuery(url: string, query: Record<string, QueryValue> = {})
     parsedUrl.searchParams.set(key, String(value));
   });
 
-  return parsedUrl.toString();
+  return isAbsolute ? parsedUrl.toString() : `${parsedUrl.pathname}${parsedUrl.search}`;
 }
 
 function isTedSbrainResponse<T>(value: unknown): value is TedSbrainResponse<T> {
@@ -96,19 +98,37 @@ export async function parseResponse<T>(response: Response): Promise<T> {
 
 function buildRequestInit(options: TedSbrainRequestOptions): RequestInit {
   const { body, query: _query, headers, ...init } = options;
+  const method = init.method ?? 'GET';
 
-  if (body === undefined || body === null || body instanceof FormData || body instanceof Blob || typeof body === 'string') {
+  if (body === undefined) {
     return {
       ...init,
+      method,
+      headers: {
+        Accept: 'application/json',
+        ...headers,
+      },
+    };
+  }
+
+  if (body === null || body instanceof FormData || body instanceof Blob || typeof body === 'string') {
+    return {
+      ...init,
+      method,
       body,
-      headers,
+      headers: {
+        Accept: 'application/json',
+        ...headers,
+      },
     };
   }
 
   return {
     ...init,
+    method,
     body: JSON.stringify(body),
     headers: {
+      Accept: 'application/json',
       'Content-Type': 'application/json',
       ...headers,
     },
