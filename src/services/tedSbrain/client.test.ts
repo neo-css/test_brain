@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  calculatePatchScore,
+  fetchLatestTodayScoreSnapshots,
+  fetchPatchScore,
+  fetchPatchScoreHistory,
+  fetchScoreSnapshot,
+  listScoreSnapshots,
+  pageScoreSnapshots,
+} from './api';
+import {
   TedSbrainApiError,
   buildTedSbrainUrl,
   createTedSbrainClient,
@@ -82,5 +91,35 @@ describe('ted-sbrain API client', () => {
     const client = createTedSbrainClient({ baseUrl: 'http://localhost:49152', fetcher });
 
     await expect(client.request('/health')).rejects.toBeInstanceOf(TedSbrainApiError);
+  });
+
+  it('endpoint functions build documented ted-sbrain paths', async () => {
+    const calls: Array<{ url: string; method?: string }> = [];
+    const fetcher = vi.fn(async (url: RequestInfo | URL, init?: RequestInit) => {
+      calls.push({ url: String(url), method: init?.method });
+      return new Response(JSON.stringify({ result: true, message: 'success', data: {}, criticalProcess: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      });
+    });
+    const client = createTedSbrainClient({ baseUrl: 'http://localhost:49152', fetcher });
+
+    await fetchPatchScore(12345, client);
+    await calculatePatchScore(12345, client);
+    await fetchPatchScoreHistory(12345, client);
+    await fetchScoreSnapshot('snapshot-12345-latest', client);
+    await listScoreSnapshots({ riskLevel: 'LOW' }, client);
+    await pageScoreSnapshots({ page: 2, pageSize: 5 }, client);
+    await fetchLatestTodayScoreSnapshots({}, client);
+
+    expect(calls).toEqual([
+      { url: 'http://localhost:49152/ted-sbrain/metric/patches/12345/score', method: 'GET' },
+      { url: 'http://localhost:49152/ted-sbrain/metric/patches/12345/score/calculate', method: 'POST' },
+      { url: 'http://localhost:49152/ted-sbrain/metric/patches/12345/score/history', method: 'GET' },
+      { url: 'http://localhost:49152/ted-sbrain/scoreSnapshot/get/snapshot-12345-latest', method: 'GET' },
+      { url: 'http://localhost:49152/ted-sbrain/scoreSnapshot/list?riskLevel=LOW', method: 'GET' },
+      { url: 'http://localhost:49152/ted-sbrain/scoreSnapshot/page?page=2&pageSize=5', method: 'GET' },
+      { url: 'http://localhost:49152/ted-sbrain/scoreSnapshot/queryLatestToday', method: 'GET' },
+    ]);
   });
 });
