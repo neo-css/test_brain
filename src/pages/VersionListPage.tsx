@@ -1,6 +1,5 @@
 import { useMemo, useState } from 'react';
-import { Link } from 'react-router-dom';
-import ThemeSwitcher from '../components/ThemeSwitcher';
+import VersionOverviewPanel from '../components/VersionOverviewPanel';
 import VersionRowCard from '../components/VersionRowCard';
 import { versionDetails } from '../data/versionMock';
 import {
@@ -17,87 +16,37 @@ function VersionListPage() {
   const [status, setStatus] = useState('ALL');
   const [sort, setSort] = useState<VersionSort>('RISK');
 
-  const riskCounts = useMemo(() => summarizeRiskCounts(versionDetails), []);
   const statusOptions = useMemo(() => getStatusOptions(versionDetails), []);
   const filteredVersions = useMemo(
     () => filterAndSortVersions(versionDetails, { query, risk, status, sort }),
     [query, risk, status, sort],
   );
+  const filteredRiskCounts = useMemo(() => summarizeRiskCounts(filteredVersions), [filteredVersions]);
 
   return (
     <main className="page-shell list-page">
-      <section className="list-header">
-        <div className="list-title-row">
-          <Link className="list-l1-return" to="/">返回 L1</Link>
-          <p className="eyebrow">IN-TEST VERSIONS</p>
-          <h1>在测版本态势列表</h1>
-        </div>
-        <div className="list-header-actions">
-          <ThemeSwitcher />
-          <div className="list-count">
-            <span>当前在测</span>
-            <strong>{versionDetails.length}</strong>
-          </div>
-        </div>
-      </section>
-
-      <section className="list-summary" aria-label="风险概览">
-        <div>
-          <span>高风险</span>
-          <strong>{riskCounts.HIGH}</strong>
-        </div>
-        <div>
-          <span>中风险</span>
-          <strong>{riskCounts.MEDIUM}</strong>
-        </div>
-        <div>
-          <span>低风险</span>
-          <strong>{riskCounts.LOW}</strong>
-        </div>
-        <div>
-          <span>筛选结果</span>
-          <strong>{filteredVersions.length}</strong>
-        </div>
-      </section>
-
-      <section className="list-toolbar" aria-label="版本筛选和排序">
-        <label className="search-field">
-          <span>搜索</span>
-          <input
-            value={query}
-            onChange={(event) => setQuery(event.target.value)}
-            placeholder="版本、系统、团队、负责人"
-            aria-label="搜索在测版本"
-          />
-        </label>
-        <label>
-          <span>风险</span>
-          <select value={risk} onChange={(event) => setRisk(event.target.value as RiskFilter)} aria-label="按风险筛选">
-            <option value="ALL">全部风险</option>
-            <option value="HIGH">高风险</option>
-            <option value="MEDIUM">中风险</option>
-            <option value="LOW">低风险</option>
-          </select>
-        </label>
-        <label>
-          <span>状态</span>
-          <select value={status} onChange={(event) => setStatus(event.target.value)} aria-label="按状态筛选">
-            <option value="ALL">全部状态</option>
-            {statusOptions.map((option) => (
-              <option value={option} key={option}>{option}</option>
-            ))}
-          </select>
-        </label>
-        <label>
-          <span>排序</span>
-          <select value={sort} onChange={(event) => setSort(event.target.value as VersionSort)} aria-label="版本排序">
-            <option value="RISK">风险优先</option>
-            <option value="SCORE_ASC">总分升序</option>
-            <option value="SCORE_DESC">总分降序</option>
-            <option value="LATEST">快照最新</option>
-          </select>
-        </label>
-      </section>
+      <VersionOverviewPanel
+        title="版本列表"
+        subtitle="统一查看版本列表与版本态势，风险数量会随搜索、状态与排序条件同步更新。"
+        summaryItems={[
+          { label: '当前在测', value: versionDetails.length },
+          { label: '筛选结果', value: filteredVersions.length },
+          { label: '高风险', value: filteredRiskCounts.HIGH },
+          { label: '中风险', value: filteredRiskCounts.MEDIUM },
+          { label: '低风险', value: filteredRiskCounts.LOW },
+        ]}
+        query={query}
+        risk={risk}
+        status={status}
+        sort={sort}
+        statusOptions={statusOptions}
+        onQueryChange={setQuery}
+        onRiskChange={setRisk}
+        onStatusChange={setStatus}
+        onSortChange={setSort}
+        showBackLink
+        backLabel="返回 L1"
+      />
 
       {filteredVersions.length > 0 ? (
         <ul className="version-list" aria-label="在测版本列表">
