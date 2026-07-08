@@ -34,5 +34,11 @@ export function buildTedSbrainUrl(baseUrl: string, path: string): string {
   const normalizedPath = normalizeTedSbrainPath(path);
   const normalizedBase = trimTrailingSlash(baseUrl);
 
-  return normalizedBase ? `${normalizedBase}${normalizedPath}` : normalizedPath;
+  if (!normalizedBase) return normalizedPath;
+
+  if (normalizedBase.endsWith(TED_SBRAIN_PATH_PREFIX)) {
+    return `${normalizedBase}${normalizedPath.slice(TED_SBRAIN_PATH_PREFIX.length)}`;
+  }
+
+  return `${normalizedBase}${normalizedPath}`;
 }

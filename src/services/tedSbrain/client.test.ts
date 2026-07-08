@@ -31,6 +31,12 @@ describe('ted-sbrain API client', () => {
     expect(buildTedSbrainUrl('', '/health')).toBe('/ted-sbrain/health');
   });
 
+  it('does not duplicate the ted-sbrain path when the base URL already includes it', () => {
+    expect(buildTedSbrainUrl('http://localhost:49152/ted-sbrain', '/health')).toBe(
+      'http://localhost:49152/ted-sbrain/health',
+    );
+  });
+
   it('builds real-compatible ted-sbrain paths', () => {
     expect(buildTedSbrainUrl('http://localhost:49152', '/metric/patches/123/score')).toBe(
       'http://localhost:49152/ted-sbrain/metric/patches/123/score',

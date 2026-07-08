@@ -7,10 +7,31 @@ import {
   pageScoreSnapshots,
 } from './repository';
 
+const documentedMetricCodes = [
+  'CHANGES_RISK',
+  'CASE_REVIEW_TIMELINESS',
+  'DEFECT_RISK',
+  'SMART_TEST',
+  'COVERAGE_390',
+  'COVERAGE_FUNCTION',
+];
+
 describe('ted-sbrain mock repository', () => {
   it('finds known patch scores and snapshots', () => {
     expect(findPatchScore(12345)?.riskLevel).toBe('LOW');
     expect(findScoreSnapshot('snapshot-12345-latest')?.patchId).toBe(12345);
+  });
+
+  it('returns documented metric codes and populated grouped views', () => {
+    const patchScore = findPatchScore(12345);
+
+    expect(patchScore?.metrics.map((metric) => metric.metricCode)).toEqual(documentedMetricCodes);
+    expect(patchScore?.byPhase.length).toBeGreaterThan(0);
+    expect(patchScore?.byDataDimension.length).toBeGreaterThan(0);
+    expect(patchScore?.byEvalTarget.length).toBeGreaterThan(0);
+    expect(patchScore?.byPhase.flatMap((group) => group.metrics)).toHaveLength(documentedMetricCodes.length);
+    expect(patchScore?.byDataDimension.flatMap((group) => group.metrics)).toHaveLength(documentedMetricCodes.length);
+    expect(patchScore?.byEvalTarget.flatMap((group) => group.metrics)).toHaveLength(documentedMetricCodes.length);
   });
 
   it('returns undefined for unknown records', () => {
