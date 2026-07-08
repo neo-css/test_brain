@@ -163,7 +163,8 @@ a {
 .l1-section-heading span {
   color: var(--c-accent);
   font-size: 11px;
-  letter-spacing: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .l1-brand-lockup strong {
@@ -810,7 +811,8 @@ button {
   margin: 0 0 8px;
   color: var(--c-accent);
   font-size: 12px;
-  letter-spacing: 0;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .list-l1-return {
@@ -844,6 +846,7 @@ button {
   min-width: 120px;
   padding: 14px 16px;
   border: 1px solid var(--c-border);
+  border-radius: 16px;
   background: var(--c-surface-flat);
   text-align: right;
 }
@@ -867,6 +870,7 @@ button {
   gap: 4px;
   padding: 3px;
   border: 1px solid var(--c-border);
+  border-radius: 12px;
   background: var(--c-surface-input);
 }
 
@@ -876,6 +880,7 @@ button {
   gap: 5px;
   padding: 5px 9px;
   border: none;
+  border-radius: 9px;
   color: var(--c-text-muted);
   background: transparent;
   font-size: 12px;
@@ -903,8 +908,15 @@ button {
 .list-summary div {
   padding: 14px 16px;
   border: 1px solid var(--c-border-light);
+  border-radius: 16px;
   background: var(--c-surface-flat);
   box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.04);
+  transition: border-color 180ms ease, transform 180ms ease;
+}
+
+.list-summary div:hover {
+  border-color: var(--c-accent);
+  transform: translateY(-1px);
 }
 
 .list-summary span {
@@ -929,6 +941,7 @@ button {
   align-items: end;
   padding: 14px;
   border: 1px solid var(--c-border-light);
+  border-radius: 18px;
   background: var(--c-toolbar-bg);
 }
 
@@ -947,6 +960,7 @@ button {
   width: 100%;
   min-height: 38px;
   border: 1px solid var(--c-border);
+  border-radius: 10px;
   color: var(--c-text);
   background: var(--c-surface-input);
   font: inherit;
@@ -989,9 +1003,10 @@ button {
   padding: 13px 14px;
   border: 1px solid var(--c-border-light);
   border-left: 3px solid var(--c-accent);
+  border-radius: 16px;
   background: var(--c-row-bg);
   box-shadow: 0 10px 28px rgba(0, 0, 0, 0.18);
-  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease;
+  transition: border-color 160ms ease, transform 160ms ease, background 160ms ease, box-shadow 160ms ease;
 }
 
 .risk-line-low {
@@ -1007,9 +1022,10 @@ button {
 }
 
 .version-row:hover {
-  transform: translateY(-1px);
+  transform: translateY(-2px);
   border-color: var(--c-border);
   background: var(--c-row-hover);
+  box-shadow: 0 14px 36px rgba(0, 0, 0, 0.24);
 }
 
 .row-score-block {
@@ -1053,7 +1069,9 @@ button {
   flex: none;
   padding: 5px 9px;
   border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 8px;
   font-size: 12px;
+  font-weight: 600;
 }
 
 .risk-low {
@@ -1122,6 +1140,7 @@ button {
 .list-empty {
   padding: 42px 24px;
   border: 1px solid var(--c-border-light);
+  border-radius: 18px;
   background: var(--c-surface-flat);
   text-align: center;
 }
@@ -1140,6 +1159,7 @@ button {
 .info-panel,
 .score-hero {
   border: 1px solid var(--c-border-light);
+  border-radius: 18px;
   background: color-mix(in srgb, var(--c-surface-flat) 74%, transparent);
   box-shadow: none;
 }
@@ -1159,6 +1179,8 @@ button {
 .panel-heading span {
   color: var(--c-accent);
   font-size: 12px;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
 }
 
 .panel-heading h2 {
@@ -1176,6 +1198,7 @@ button {
   overflow: hidden;
   min-height: 58px;
   padding: 10px 14px;
+  border-radius: 18px;
   background:
     linear-gradient(90deg, color-mix(in srgb, var(--c-accent) 10%, transparent), transparent 40%),
     color-mix(in srgb, var(--c-surface-flat) 78%, transparent);
@@ -1301,6 +1324,7 @@ button {
   overflow: hidden;
   height: 9px;
   border: 1px solid var(--c-border-muted);
+  border-radius: 999px;
   background: rgba(255, 255, 255, 0.055);
 }
 
@@ -1327,6 +1351,7 @@ button {
   padding: 12px;
   border: 1px solid var(--c-border-light);
   border-left: 3px solid var(--c-border);
+  border-radius: 14px;
   background: var(--c-surface-flat);
   opacity: 0;
   transform: translateY(10px);
@@ -1428,8 +1453,15 @@ button {
   width: fit-content;
   padding: 9px 12px;
   border: 1px solid var(--c-border);
+  border-radius: 12px;
   color: var(--c-text-secondary);
   background: var(--c-surface-flat);
+  transition: border-color 160ms ease, color 160ms ease;
+}
+
+.back-link:hover {
+  color: var(--c-text);
+  border-color: var(--c-accent);
 }
 
 .detail-header-actions {
@@ -1446,6 +1478,7 @@ button {
   min-height: 32px;
   padding: 0 10px;
   border: 1px solid var(--c-border-light);
+  border-radius: 10px;
   color: var(--c-text-muted);
   background: transparent;
   font-size: 12px;
@@ -1476,6 +1509,7 @@ button {
 .detail-tags span {
   padding: 7px 10px;
   border: 1px solid var(--c-border);
+  border-radius: 10px;
   color: var(--c-text-secondary);
   background: var(--c-surface-flat);
   font-size: 13px;
@@ -1489,6 +1523,7 @@ button {
   gap: 6px 4px;
   padding: 12px 16px;
   border-block: 1px solid var(--c-border-light);
+  border-radius: 14px;
   background: transparent;
   font-size: 13px;
   color: var(--c-text-secondary);
@@ -1590,7 +1625,7 @@ button {
   position: relative;
   z-index: 1;
   border-top-color: transparent;
-  overflow: hidden;
+  overflow: visible;
 }
 
 .cockpit-radar-panel::before {
@@ -1704,6 +1739,7 @@ button {
   overflow: hidden;
   height: 18px;
   border: 1px solid var(--c-border-muted);
+  border-radius: 999px;
   background: color-mix(in srgb, var(--c-surface-raised) 65%, transparent);
 }
 
@@ -1773,6 +1809,7 @@ button {
   overflow: hidden;
   height: 10px;
   border: 0;
+  border-radius: 999px;
   background: var(--c-border-muted);
 }
 
@@ -1954,6 +1991,7 @@ button {
   overflow: hidden;
   height: 20px;
   border: 0;
+  border-radius: 999px;
   background:
     repeating-linear-gradient(90deg, transparent 0 13%, rgba(255, 255, 255, 0.05) 13% 13.5%),
     var(--c-border-muted);
@@ -2013,6 +2051,7 @@ button {
 .focus-empty {
   padding: 18px;
   border: 1px solid var(--c-border-light);
+  border-radius: 14px;
   color: var(--c-text-secondary);
   background: transparent;
   font-size: 13px;
@@ -2028,8 +2067,15 @@ button {
   grid-template-columns: minmax(220px, 0.75fr) minmax(86px, auto) minmax(0, 1.25fr);
   gap: 16px;
   align-items: start;
-  padding: 12px 0 12px 14px;
+  padding: 12px 14px 12px 14px;
   border-left: 3px solid var(--c-border);
+  border-radius: 14px;
+  background: color-mix(in srgb, var(--c-surface-flat) 60%, transparent);
+  transition: background 160ms ease;
+}
+
+.evidence-row:hover {
+  background: color-mix(in srgb, var(--c-surface-raised) 70%, transparent);
 }
 
 .evidence-title strong,
@@ -2070,6 +2116,7 @@ button {
   min-height: 54px;
   padding: 9px;
   border: 1px solid var(--c-border-muted);
+  border-radius: 10px;
   background: transparent;
 }
 
@@ -2097,8 +2144,9 @@ button {
 }
 
 .metric-radar-chart {
+  display: block;
   width: 100%;
-  max-width: 440px;
+  max-width: 520px;
   overflow: visible;
 }
 
@@ -2145,50 +2193,38 @@ button {
   background: var(--c-risk-high);
 }
 
-.metric-radar-point-label {
-  box-sizing: border-box;
-  display: grid;
-  grid-template-columns: 6px minmax(0, 1fr) auto;
-  gap: 1px 5px;
-  align-items: start;
-  width: 100%;
-  height: 100%;
-  min-width: 0;
-  color: var(--c-text);
+/* ===== Outer hexagon ring (legend carrier) ===== */
+.metric-radar-outer-ring {
+  fill: none;
+  stroke: var(--c-border);
+  stroke-width: 1;
+  stroke-dasharray: 6 4;
+  opacity: 0.5;
+}
+
+.metric-radar-outer-dot {
+  stroke: var(--c-bg);
+  stroke-width: 1.5;
+}
+
+/* ===== Legend labels (SVG text around outer ring, with line wrapping) ===== */
+.metric-radar-label-group {
   opacity: 0;
-  transform: translateY(8px);
   animation: fade-up 420ms calc(220ms + (var(--delay-index) * 55ms)) ease-out forwards;
 }
 
-.metric-radar-label-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 999px;
-}
-
-.metric-radar-label-name,
-.metric-radar-label-score {
-  min-width: 0;
-  line-height: 1;
-}
-
 .metric-radar-label-name {
-  color: var(--c-text);
-  font-size: 10px;
+  fill: var(--c-text);
+  font-size: 12px;
   font-weight: 700;
-  line-height: 1.18;
-  overflow-wrap: anywhere;
-  text-shadow: 0 1px 5px var(--c-bg);
+  font-family: system-ui, -apple-system, sans-serif;
 }
 
 .metric-radar-label-score {
-  color: var(--c-accent);
   font-family: "DIN Alternate", "Arial Narrow", Arial, sans-serif;
-  font-size: 13px;
-  font-style: normal;
+  font-size: 14px;
   font-weight: 800;
-  line-height: 1.05;
-  text-shadow: 0 1px 5px var(--c-bg);
+  stroke: none;
 }
 
 @media (prefers-reduced-motion: reduce) {
@@ -2196,10 +2232,14 @@ button {
     stroke-dashoffset: 0;
   }
 
-  .metric-radar-dot-animated,
-  .metric-radar-point-label {
+  .metric-radar-dot-animated {
     opacity: 1;
     transform: none;
+  }
+
+  .metric-radar-label-group {
+    opacity: 1;
+    animation: none;
   }
 }
 
@@ -2214,6 +2254,7 @@ button {
   min-height: 118px;
   padding: 14px;
   border: 1px solid var(--c-border-light);
+  border-radius: 14px;
   background: var(--c-surface-flat);
 }
 
@@ -2317,13 +2358,17 @@ button {
   .radar-score-animated { stroke-dashoffset: 0; }
   .radar-dot-animated,
   .radar-label-animated,
-  .metric-radar-point-label,
   .metric-row,
   .cockpit-motion-sequence,
   .cockpit-motion-sequence .cockpit-wing,
   .cockpit-motion-sequence .cockpit-center {
     opacity: 1;
     transform: none;
+  }
+
+  .metric-radar-label-group {
+    opacity: 1;
+    animation: none;
   }
 
   .cockpit-motion-sequence::before,

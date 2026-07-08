@@ -1,26 +1,25 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import DynamicTopology from '../components/DynamicTopology';
+import type { ScannerRisk } from '../components/DynamicTopologyLogic';
 import ThemeSwitcher from '../components/ThemeSwitcher';
 import { formatScore, riskLabel, versionDetails } from '../data/versionMock';
 import { buildL1DashboardSummary } from './l1DashboardSummary';
 
-type TopologyRiskFilter = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
-
 const fromHomeState = { from: '/', fromLabel: '返回测试大脑' };
-const topologyRiskFilters: TopologyRiskFilter[] = ['ALL', 'HIGH', 'MEDIUM', 'LOW'];
+const topologyRiskFilters: ScannerRisk[] = ['ALL', 'HIGH', 'MEDIUM', 'LOW'];
 
 function riskClass(riskLevel: string) {
   return `risk-${riskLevel.toLowerCase()}`;
 }
 
-function topologyFilterLabel(filter: TopologyRiskFilter) {
+function topologyFilterLabel(filter: ScannerRisk) {
   if (filter === 'ALL') return '下发全部探测器';
   return `下发${riskLabel(filter)}探测器`;
 }
 
 function L1DashboardPage() {
-  const [topologyRisk, setTopologyRisk] = useState<TopologyRiskFilter>('ALL');
+  const [topologyRisk, setTopologyRisk] = useState<ScannerRisk>('ALL');
   const [scannerSpeed, setScannerSpeed] = useState(1);
   const summary = buildL1DashboardSummary(versionDetails);
   const l2State = { from: '/', fromLabel: '返回测试大脑' };

@@ -1,31 +1,16 @@
-import { CSSProperties } from 'react';
+import { CSSProperties, useMemo } from 'react';
 import type { MetricItem, VersionDetail } from '../data/versionMock';
+import { polarPoint, pointsToString, type RadarPoint } from './radarUtils';
 
 interface MetricScoreCardsProps {
   version: VersionDetail;
 }
 
-interface RadarPoint {
-  x: number;
-  y: number;
-}
-
 const MAX_SCORE = 5;
-const LABEL_WIDTH = 112;
-const LABEL_HEIGHT = 46;
-const LABEL_OFFSET = 14;
-
-function polarPoint(index: number, total: number, radius: number, center: number): RadarPoint {
-  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
-  return {
-    x: center + Math.cos(angle) * radius,
-    y: center + Math.sin(angle) * radius,
-  };
-}
-
-function pointsToString(points: RadarPoint[]) {
-  return points.map((point) => `${point.x},${point.y}`).join(' ');
-}
+const VIEW_SIZE = 440;
+const CENTER = VIEW_SIZE / 2;
+const MAX_RADIUS = 120;
+const OUTER_RADIUS = 190;
 
 function riskClass(level?: string): string {
   if (level === 'HIGH') return 'metric-radar-risk-high';
@@ -33,15 +18,36 @@ function riskClass(level?: string): string {
   return 'metric-radar-risk-low';
 }
 
-function labelAnchorPoint(index: number, total: number, radius: number, center: number): RadarPoint {
-  const axisPoint = polarPoint(index, total, radius + LABEL_OFFSET, center);
-  const horizontalBias = axisPoint.x < center - 8 ? -LABEL_WIDTH : axisPoint.x > center + 8 ? 0 : -LABEL_WIDTH / 2;
-  const verticalBias = axisPoint.y < center - 8 ? -LABEL_HEIGHT : axisPoint.y > center + 8 ? 0 : -LABEL_HEIGHT / 2;
+function textAnchor(index: number, total: number): 'start' | 'middle' | 'end' {
+  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
+  const cos = Math.cos(angle);
+  if (cos > 0.3) return 'start';
+  if (cos < -0.3) return 'end';
+  return 'middle';
+}
 
-  return {
-    x: Math.min(Math.max(axisPoint.x + horizontalBias, 4), center * 2 - LABEL_WIDTH - 4),
-    y: Math.min(Math.max(axisPoint.y + verticalBias, 4), center * 2 - LABEL_HEIGHT - 4),
-  };
+function dyOffset(index: number, total: number): number {
+  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
+  const sin = Math.sin(angle);
+  if (sin < -0.3) return -8;
+  if (sin > 0.3) return 14;
+  return 4;
+}
+
+/** Split a metric name into lines of at most `maxChars` characters */
+function wrapText(text: string, maxChars: number): string[] {
+  if (text.length <= maxChars) return [text];
+  const lines: string[] = [];
+  let rest = text;
+  while (rest.length > maxChars) {
+    let breakAt = rest.lastIndexOf('，', maxChars);
+    if (breakAt < 1) breakAt = rest.lastIndexOf('、', maxChars);
+    if (breakAt < 1) breakAt = maxChars;
+    lines.push(rest.slice(0, breakAt));
+    rest = rest.slice(breakAt);
+  }
+  if (rest) lines.push(rest);
+  return lines;
 }
 
 export function buildMetricRadarPoints(metrics: MetricItem[], center: number, maxRadius: number): RadarPoint[] {
@@ -53,26 +59,56 @@ export function buildMetricRadarPoints(metrics: MetricItem[], center: number, ma
 }
 
 function MetricScoreCards({ version }: MetricScoreCardsProps) {
-  const size = 320;
-  const center = size / 2;
-  const maxRadius = 124;
-  const rings = [0.2, 0.4, 0.6, 0.8, 1];
   const metrics = version.metrics;
-  const axisPoints = metrics.map((_, index) => polarPoint(index, metrics.length, maxRadius, center));
-  const scorePoints = buildMetricRadarPoints(metrics, center, maxRadius);
+  const total = metrics.length;
+  const center = CENTER;
+  const maxRadius = MAX_RADIUS;
+  const rings = [0.2, 0.4, 0.6, 0.8, 1];
+  const axisPoints = metrics.map((_, index) => polarPoint(index, total, maxRadius, center));
+  const outerPoints = metrics.map((_, index) => polarPoint(index, total, OUTER_RADIUS, center));
+  const scorePoints = useMemo(
+    () =>
+      metrics.map((metric, index) => {
+        const ratio = Math.min(Math.max(metric.actualScore / MAX_SCORE, 0), 1);
+        const radius = Math.max(12, ratio * maxRadius);
+        return polarPoint(index, total, radius, center);
+      }),
+    [metrics, maxRadius, center, total],
+  );
+
+  const labelPoints = metrics.map((_, index) =>
+    polarPoint(index, total, OUTER_RADIUS + 8, center),
+  );
 
   return (
     <div className="metric-radar-wrap">
-      <svg className="metric-radar-chart" viewBox={`0 0 ${size} ${size}`} role="img" aria-label="指标得分雷达图">
+      <svg
+        className="metric-radar-chart"
+        viewBox={`0 0 ${VIEW_SIZE} ${VIEW_SIZE}`}
+        role="img"
+        aria-label="指标得分雷达图"
+      >
         {rings.map((ring) => (
           <polygon
             key={ring}
-            points={pointsToString(metrics.map((_, index) => polarPoint(index, metrics.length, maxRadius * ring, center)))}
+            points={pointsToString(metrics.map((_, index) => polarPoint(index, total, maxRadius * ring, center)))}
             className="radar-ring"
           />
         ))}
         {axisPoints.map((point, index) => (
-          <line key={metrics[index].metricCode} x1={center} y1={center} x2={point.x} y2={point.y} className="radar-axis" />
+          <line
+            key={metrics[index].metricCode}
+            x1={center} y1={center} x2={point.x} y2={point.y}
+            className="radar-axis"
+          />
+        ))}
+        <polygon points={pointsToString(outerPoints)} className="metric-radar-outer-ring" />
+        {outerPoints.map((point, index) => (
+          <circle
+            key={`outer-${metrics[index].metricCode}`}
+            cx={point.x} cy={point.y} r="3"
+            className={`metric-radar-outer-dot ${riskClass(metrics[index].riskLevel)}`}
+          />
         ))}
         <polygon points={pointsToString(scorePoints)} className="metric-radar-score metric-radar-score-animated" />
         {scorePoints.map((point, index) => {
@@ -80,38 +116,47 @@ function MetricScoreCards({ version }: MetricScoreCardsProps) {
           return (
             <circle
               key={metric.metricCode}
-              cx={point.x}
-              cy={point.y}
-              r="4.5"
+              cx={point.x} cy={point.y} r="4.5"
               className={`metric-radar-dot metric-radar-dot-animated ${riskClass(metric.riskLevel)}`}
               style={{ '--delay-index': index } as CSSProperties}
             />
           );
         })}
-        {metrics.map((metric, index) => {
-          const labelPoint = labelAnchorPoint(index, metrics.length, maxRadius, center);
+        {labelPoints.map((point, index) => {
+          const metric = metrics[index];
+          const anchor = textAnchor(index, total);
+          const dy = dyOffset(index, total);
           const meta = `${metric.phaseName ?? '未知阶段'} / ${metric.evalTargetName ?? '未知目标'}`;
-          const label = `${metric.metricName}，得分 ${metric.actualScore.toFixed(1)}，${meta}`;
-
+          const ariaLabel = `${metric.metricName}，得分 ${metric.actualScore.toFixed(1)}，${meta}`;
+          const nameLines = wrapText(metric.metricName, 7);
           return (
-            <foreignObject
+            <g
               key={`${metric.metricCode}-label`}
-              x={labelPoint.x}
-              y={labelPoint.y}
-              width={LABEL_WIDTH}
-              height={LABEL_HEIGHT}
+              className="metric-radar-label-group metric-radar-label-animated"
+              style={{ '--delay-index': index } as CSSProperties}
+              role="text"
+              aria-label={ariaLabel}
             >
-              <div
-                className="metric-radar-point-label metric-radar-label-animated"
-                aria-label={label}
-                title={label}
-                style={{ '--delay-index': index } as CSSProperties}
+              {nameLines.map((line, li) => (
+                <text
+                  key={li}
+                  x={point.x}
+                  y={point.y + dy + li * 14}
+                  textAnchor={anchor}
+                  className="metric-radar-label-name"
+                >
+                  {line}
+                </text>
+              ))}
+              <text
+                x={point.x}
+                y={point.y + dy + nameLines.length * 14}
+                textAnchor={anchor}
+                className={`metric-radar-label-score ${riskClass(metric.riskLevel)}`}
               >
-                <span className={`metric-radar-label-dot ${riskClass(metric.riskLevel)}`} />
-                <strong className="metric-radar-label-name">{metric.metricName}</strong>
-                <em className="metric-radar-label-score">{metric.actualScore.toFixed(1)}</em>
-              </div>
-            </foreignObject>
+                {metric.actualScore.toFixed(1)}
+              </text>
+            </g>
           );
         })}
       </svg>

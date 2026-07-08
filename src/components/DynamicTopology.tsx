@@ -1,8 +1,14 @@
 import { useEffect, useRef, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import type { VersionDetail } from '../data/versionMock';
-
-type ScannerRisk = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
+import {
+  getTopologyColumnBody,
+  getTopologyColumnProgress,
+  getTopologyColumnScanState,
+  getTopologyColumnVisualState,
+  getTopologyWindowPattern,
+  type ScannerRisk,
+} from './DynamicTopologyLogic';
 
 const COLS = 14;
 const ROWS = 8;
@@ -10,12 +16,6 @@ const SPACING = 52;
 const MAX_NODES = COLS * ROWS;
 
 function riskRGB(risk: string) {
-  if (risk === 'HIGH') return { r: 218, g: 82, b: 98 };
-  if (risk === 'MEDIUM') return { r: 201, g: 148, b: 64 };
-  return { r: 58, g: 168, b: 154 };
-}
-
-function scannerRGB(risk: ScannerRisk) {
   if (risk === 'HIGH') return { r: 218, g: 82, b: 98 };
   if (risk === 'MEDIUM') return { r: 201, g: 148, b: 64 };
   if (risk === 'LOW') return { r: 58, g: 168, b: 154 };
@@ -43,7 +43,7 @@ interface Column {
   id: string;
   gx: number;
   gy: number;
-  baseH: number;
+  progress: number;
   version: VersionDetail;
   color: ReturnType<typeof riskRGB>;
 }
@@ -59,12 +59,12 @@ interface VisibleColumn {
 
 function buildColumns(versions: VersionDetail[]): Column[] {
   return versions.slice(0, MAX_NODES).map((v, i) => {
-    const penalty = Math.max(0, 95 - v.totalScore);
+    const progress = getTopologyColumnProgress(v);
     return {
       id: `${v.sysId}-${v.patchId}`,
       gx: i % COLS,
       gy: Math.floor(i / COLS),
-      baseH: 36 + penalty * 1.1 + (v.riskLevel === 'HIGH' ? 28 : v.riskLevel === 'MEDIUM' ? 16 : 6),
+      progress,
       version: v,
       color: riskRGB(v.riskLevel),
     };
@@ -94,11 +94,18 @@ function DynamicTopology({
   const colsRef = useRef<Column[]>([]);
   const visibleColsRef = useRef<VisibleColumn[]>([]);
   const hoverRef = useRef<Column | null>(null);
+  const scannerSpeedRef = useRef(scannerSpeed);
   const scanTimeRef = useRef(0);
   const lastFrameTimeRef = useRef<number | null>(null);
   const [hover, setHover] = useState<Column | null>(null);
 
-  useEffect(() => { colsRef.current = buildColumns(versions); }, [versions]);
+  useEffect(() => {
+    colsRef.current = buildColumns(versions);
+  }, [versions]);
+
+  useEffect(() => {
+    scannerSpeedRef.current = scannerSpeed;
+  }, [scannerSpeed]);
 
   useEffect(() => {
     const canvas = cvs.current;
@@ -122,7 +129,7 @@ function DynamicTopology({
       const lastFrameTime = lastFrameTimeRef.current ?? t;
       const frameDelta = Math.min(t - lastFrameTime, 80);
       lastFrameTimeRef.current = t;
-      if (!hoverRef.current) scanTimeRef.current += frameDelta * scannerSpeed;
+      if (!hoverRef.current) scanTimeRef.current += frameDelta * scannerSpeedRef.current;
       const scanTime = scanTimeRef.current;
       const W = w.clientWidth;
       const H = w.clientHeight;
@@ -134,8 +141,7 @@ function DynamicTopology({
       const dark = theme !== 'light';
       const bgBase = dark ? '#030a14' : '#f0f4f8';
       const bgBright = dark ? '#061220' : '#ffffff';
-      const scanner = scannerRGB(scannerRisk);
-      const scannerFocus = scannerRisk !== 'ALL';
+      const scanner = riskRGB(scannerRisk);
       const scannerColor = `${scanner.r},${scanner.g},${scanner.b}`;
 
       // drone free orbit around the city
@@ -207,33 +213,129 @@ function DynamicTopology({
       const scanMinX = dx - beamHalf;
       const scanMaxX = dx + beamHalf;
 
-      const scannedCols: VisibleColumn[] = [];
+      const litCols: VisibleColumn[] = [];
 
       for (const col of columns) {
         const pos = screenPos(col.gx, col.gy, cx, cy, s);
-        if (pos.x <= scanMinX || pos.x >= scanMaxX) continue;
+        const scanState = getTopologyColumnScanState({
+          screenX: pos.x,
+          scanMinX,
+          scanMaxX,
+          scannerRisk,
+          riskLevel: col.version.riskLevel,
+        });
+        const visualState = getTopologyColumnVisualState({
+          progress: col.progress,
+          riskLevel: col.version.riskLevel,
+          totalScore: col.version.totalScore,
+          isLit: scanState.isLit,
+        });
+
         const beat = Math.sin(scanTime / 160 + col.gx * 0.55 + col.gy * 0.5);
-        const breathe = 4 + Math.max(0, beat) * 14;
-        const h = (col.baseH + breathe) * s;
+        const breathe = visualState.isRaised && scanState.shouldPulse ? 4 + Math.max(0, beat) * 14 : 0;
+        const h = (visualState.height + breathe) * s;
         const groundY = pos.y;
         const topY = groundY - h;
 
         const hovered = hoverRef.current?.id === col.id;
-        const w = (col.version.riskLevel === 'HIGH' ? 11 : col.version.riskLevel === 'MEDIUM' ? 9 : 7) * s;
-        const d = w * 0.45;
-        scannedCols.push({ col, pos, topY, groundY, width: w, depth: d });
+        const body = getTopologyColumnBody(col.version.riskLevel);
+        const widthBoost = visualState.form === 'alertTower' ? 1.18 : visualState.form === 'tower' ? 1.08 : 1;
+        const w = body.width * widthBoost * s;
+        const d = body.depth * (visualState.isRaised ? 1 : 0.9) * s;
         const { r, g, b } = col.color;
-        const matchesScanner = scannerRisk === 'ALL' || col.version.riskLevel === scannerRisk;
-        const activeSignal = matchesScanner ? 1 : 0.22;
-        const faceAlpha = hovered ? 0.86 : 0.74;
-        const leftFace = dark ? `rgba(82,116,136,${faceAlpha})` : `rgba(178,196,204,${faceAlpha})`;
-        const rightFace = dark ? `rgba(38,66,86,${faceAlpha})` : `rgba(132,156,168,${faceAlpha})`;
-        const topFace = dark ? 'rgba(164,207,220,0.88)' : 'rgba(246,252,252,0.94)';
+
+        if (!visualState.isRaised) {
+          const tileY = groundY + d * 0.42;
+          ctx.save();
+          ctx.translate(pos.x, tileY);
+          ctx.scale(1, 0.56);
+          drawHex(ctx, 0, 0, w * (visualState.form === 'cabinet' ? 1.45 : 1.3));
+          ctx.fillStyle = dark ? 'rgba(75,88,98,0.24)' : 'rgba(172,183,194,0.34)';
+          ctx.strokeStyle = dark ? 'rgba(170,186,196,0.1)' : 'rgba(84,96,108,0.12)';
+          ctx.lineWidth = 0.9;
+          ctx.fill();
+          ctx.stroke();
+          ctx.restore();
+
+          ctx.fillStyle = dark ? 'rgba(124,139,148,0.04)' : 'rgba(91,102,112,0.055)';
+          ctx.beginPath();
+          ctx.ellipse(pos.x, groundY + d * 0.34, w * 1.55, d * 1.1, 0, 0, Math.PI * 2);
+          ctx.fill();
+
+          if (visualState.form === 'cabinet') {
+            const cw = w * 0.58;
+            const cd = d * 0.68;
+            ctx.beginPath();
+            ctx.moveTo(pos.x - cw, groundY);
+            ctx.lineTo(pos.x, groundY + cd);
+            ctx.lineTo(pos.x, topY + cd);
+            ctx.lineTo(pos.x - cw, topY);
+            ctx.closePath();
+            ctx.fillStyle = dark ? 'rgba(68,80,90,0.68)' : 'rgba(168,178,188,0.74)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(pos.x, groundY + cd);
+            ctx.lineTo(pos.x + cw, groundY);
+            ctx.lineTo(pos.x + cw, topY);
+            ctx.lineTo(pos.x, topY + cd);
+            ctx.closePath();
+            ctx.fillStyle = dark ? 'rgba(45,56,66,0.72)' : 'rgba(139,151,162,0.76)';
+            ctx.fill();
+
+            ctx.beginPath();
+            ctx.moveTo(pos.x - cw, topY);
+            ctx.lineTo(pos.x, topY + cd);
+            ctx.lineTo(pos.x + cw, topY);
+            ctx.lineTo(pos.x, topY - cd);
+            ctx.closePath();
+            ctx.fillStyle = dark ? 'rgba(128,143,154,0.76)' : 'rgba(218,225,231,0.86)';
+            ctx.fill();
+            ctx.strokeStyle = dark ? 'rgba(170,184,194,0.14)' : 'rgba(73,84,96,0.14)';
+            ctx.stroke();
+          } else {
+            ctx.fillStyle = dark ? 'rgba(150,166,176,0.12)' : 'rgba(105,118,132,0.13)';
+            ctx.beginPath();
+            ctx.moveTo(pos.x - w * 0.42, tileY);
+            ctx.lineTo(pos.x, tileY + d * 0.3);
+            ctx.lineTo(pos.x + w * 0.42, tileY);
+            ctx.lineTo(pos.x, tileY - d * 0.3);
+            ctx.closePath();
+            ctx.fill();
+          }
+          continue;
+        }
+
+        litCols.push({ col, pos, topY, groundY, width: w, depth: d });
+        const activeSignal = 1;
+        const faceAlpha = hovered && scanState.isLit ? 0.94 : scanState.isLit ? 0.84 : 0.68;
+        const leftFace = scanState.isLit
+          ? dark ? `rgba(74,112,132,${faceAlpha})` : `rgba(176,194,202,${faceAlpha})`
+          : dark ? 'rgba(76,88,98,0.6)' : 'rgba(181,190,197,0.72)';
+        const rightFace = scanState.isLit
+          ? dark ? `rgba(34,63,82,${faceAlpha})` : `rgba(128,151,163,${faceAlpha})`
+          : dark ? 'rgba(45,58,68,0.64)' : 'rgba(139,149,158,0.68)';
+        const topFace = scanState.isLit
+          ? dark ? 'rgba(174,216,226,0.92)' : 'rgba(246,252,252,0.96)'
+          : dark ? 'rgba(124,139,150,0.72)' : 'rgba(216,223,229,0.86)';
+        const rimAlpha = scanState.isLit ? 0.54 : 0.16;
+        const sideStripeAlpha = scanState.isLit ? 0.22 : 0.08;
+        const floorCount = visualState.windowRows;
+        const windows = getTopologyWindowPattern(col.id, floorCount * 2);
+        const windowFill = scanState.isLit
+          ? `rgba(${r},${g},${b},${dark ? 0.32 : 0.36})`
+          : dark ? 'rgba(205,218,226,0.13)' : 'rgba(108,120,132,0.14)';
+        const windowOffFill = dark ? 'rgba(18,29,39,0.16)' : 'rgba(255,255,255,0.15)';
+        const windowStroke = scanState.isLit
+          ? `rgba(${r},${g},${b},${dark ? 0.22 : 0.26})`
+          : dark ? 'rgba(224,238,246,0.07)' : 'rgba(60,72,84,0.08)';
 
         // glow ellipse at base
-        ctx.fillStyle = `rgba(${r},${g},${b},${(hovered ? 0.18 : 0.09) * activeSignal})`;
+        ctx.fillStyle = scanState.isLit
+          ? `rgba(${r},${g},${b},${hovered ? 0.2 : 0.1})`
+          : dark ? 'rgba(124,139,148,0.055)' : 'rgba(91,102,112,0.07)';
         ctx.beginPath();
-        ctx.ellipse(pos.x, groundY, w * 2.35, d * 1.5, 0, 0, Math.PI * 2);
+        ctx.ellipse(pos.x, groundY + d * 0.28, w * 2.15, d * 1.62, 0, 0, Math.PI * 2);
         ctx.fill();
 
         // LEFT FACE
@@ -243,9 +345,30 @@ function DynamicTopology({
         ctx.lineTo(pos.x, topY + d);
         ctx.lineTo(pos.x - w, topY);
         ctx.closePath();
-        ctx.globalAlpha = matchesScanner ? 1 : 0.42;
         ctx.fillStyle = leftFace;
         ctx.fill();
+        ctx.fillStyle = scanState.isLit
+          ? `rgba(${r},${g},${b},${sideStripeAlpha})`
+          : dark ? 'rgba(210,224,232,0.055)' : 'rgba(70,82,94,0.05)';
+        ctx.beginPath();
+        ctx.moveTo(pos.x - w * 0.74, groundY - 2);
+        ctx.lineTo(pos.x - w * 0.38, groundY + d * 0.34);
+        ctx.lineTo(pos.x - w * 0.38, topY + d * 0.92);
+        ctx.lineTo(pos.x - w * 0.74, topY + d * 0.58);
+        ctx.closePath();
+        ctx.fill();
+        for (let floor = 0; floor < floorCount; floor++) {
+          const tFloor = (floor + 1) / (floorCount + 1);
+          const wy = groundY - h * tFloor + d * 0.42;
+          const wx = pos.x - w * 0.64;
+          ctx.fillStyle = windows[floor * 2] ? windowFill : windowOffFill;
+          ctx.strokeStyle = windowStroke;
+          ctx.lineWidth = 0.45;
+          ctx.beginPath();
+          ctx.roundRect(wx, wy, w * 0.25, Math.max(2.2, d * 0.34), 0.8);
+          ctx.fill();
+          ctx.stroke();
+        }
 
         // RIGHT FACE
         ctx.beginPath();
@@ -256,6 +379,28 @@ function DynamicTopology({
         ctx.closePath();
         ctx.fillStyle = rightFace;
         ctx.fill();
+        ctx.fillStyle = scanState.isLit
+          ? `rgba(255,255,255,${dark ? 0.08 : 0.16})`
+          : dark ? 'rgba(255,255,255,0.035)' : 'rgba(255,255,255,0.12)';
+        ctx.beginPath();
+        ctx.moveTo(pos.x + w * 0.38, groundY + d * 0.34);
+        ctx.lineTo(pos.x + w * 0.72, groundY);
+        ctx.lineTo(pos.x + w * 0.72, topY + d * 0.56);
+        ctx.lineTo(pos.x + w * 0.38, topY + d * 0.9);
+        ctx.closePath();
+        ctx.fill();
+        for (let floor = 0; floor < floorCount; floor++) {
+          const tFloor = (floor + 1) / (floorCount + 1);
+          const wy = groundY - h * tFloor + d * 0.38;
+          const wx = pos.x + w * 0.36;
+          ctx.fillStyle = windows[floor * 2 + 1] ? windowFill : windowOffFill;
+          ctx.strokeStyle = windowStroke;
+          ctx.lineWidth = 0.45;
+          ctx.beginPath();
+          ctx.roundRect(wx, wy, w * 0.26, Math.max(2.2, d * 0.34), 0.8);
+          ctx.fill();
+          ctx.stroke();
+        }
 
         // TOP FACE
         ctx.beginPath();
@@ -267,12 +412,22 @@ function DynamicTopology({
         ctx.fillStyle = topFace;
         ctx.fill();
         ctx.globalAlpha = 1;
+        ctx.fillStyle = scanState.isLit
+          ? `rgba(${r},${g},${b},${hovered ? 0.34 : 0.22})`
+          : dark ? 'rgba(170,185,196,0.12)' : 'rgba(120,132,144,0.12)';
+        ctx.beginPath();
+        ctx.moveTo(pos.x - w * 0.46, topY + d * 0.04);
+        ctx.lineTo(pos.x, topY + d * 0.46);
+        ctx.lineTo(pos.x + w * 0.46, topY + d * 0.04);
+        ctx.lineTo(pos.x, topY - d * 0.42);
+        ctx.closePath();
+        ctx.fill();
 
         // visible edges of the 3D column, with risk color as a thin signal only
-        ctx.strokeStyle = matchesScanner
-          ? dark ? 'rgba(226,246,255,0.18)' : 'rgba(40,78,92,0.13)'
-          : dark ? 'rgba(226,246,255,0.08)' : 'rgba(40,78,92,0.05)';
-        ctx.lineWidth = hovered ? 1.4 : 0.8;
+        ctx.strokeStyle = scanState.isLit
+          ? dark ? 'rgba(226,246,255,0.24)' : 'rgba(40,78,92,0.18)'
+          : dark ? 'rgba(160,174,184,0.15)' : 'rgba(76,86,96,0.13)';
+        ctx.lineWidth = hovered && scanState.isLit ? 1.5 : 0.9;
         ctx.beginPath();
         ctx.moveTo(pos.x - w, groundY);
         ctx.lineTo(pos.x - w, topY);
@@ -280,24 +435,47 @@ function DynamicTopology({
         ctx.lineTo(pos.x + w, topY);
         ctx.lineTo(pos.x + w, groundY);
         ctx.stroke();
-        ctx.strokeStyle = `rgba(${r},${g},${b},${(hovered ? 0.62 : 0.32) * activeSignal})`;
+        ctx.strokeStyle = scanState.isLit
+          ? `rgba(${r},${g},${b},${(hovered ? 0.7 : rimAlpha) * activeSignal})`
+          : dark ? 'rgba(168,181,190,0.12)' : 'rgba(73,84,96,0.12)';
         ctx.beginPath();
         ctx.moveTo(pos.x, topY - d);
         ctx.lineTo(pos.x, topY + d);
         ctx.lineTo(pos.x, groundY + d);
         ctx.stroke();
 
-        // top glow dot
-        ctx.fillStyle = `rgba(${r},${g},${b},${0.88 * activeSignal})`;
-        ctx.shadowColor = `rgba(${r},${g},${b},${0.42 * activeSignal})`;
-        ctx.shadowBlur = hovered ? 18 : 10;
+        // compact sensor cap instead of a point-like light bead
+        ctx.fillStyle = scanState.isLit
+          ? `rgba(${r},${g},${b},0.72)`
+          : dark ? 'rgba(174,187,196,0.28)' : 'rgba(99,112,126,0.24)';
+        ctx.shadowColor = scanState.isLit ? `rgba(${r},${g},${b},0.34)` : 'rgba(0,0,0,0)';
+        ctx.shadowBlur = scanState.isLit ? hovered ? 14 : 7 : 0;
         ctx.beginPath();
-        ctx.arc(pos.x, topY, w * 0.36, 0, Math.PI * 2);
+        ctx.ellipse(pos.x, topY + d * 0.05, w * 0.34, d * 0.28, 0, 0, Math.PI * 2);
         ctx.fill();
         ctx.shadowBlur = 0;
 
+        if (visualState.hasAlertCap) {
+          const capY = topY - d * 0.8;
+          ctx.fillStyle = `rgba(${r},${g},${b},${dark ? 0.82 : 0.74})`;
+          ctx.strokeStyle = dark ? 'rgba(255,245,230,0.32)' : 'rgba(92,38,46,0.24)';
+          ctx.lineWidth = 0.9;
+          ctx.beginPath();
+          ctx.moveTo(pos.x, capY - d * 0.45);
+          ctx.lineTo(pos.x + w * 0.58, capY + d * 0.38);
+          ctx.lineTo(pos.x - w * 0.58, capY + d * 0.38);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+          ctx.fillStyle = dark ? 'rgba(255,255,255,0.78)' : 'rgba(255,255,255,0.9)';
+          ctx.fillRect(pos.x - 0.7, capY - d * 0.2, 1.4, d * 0.32);
+          ctx.beginPath();
+          ctx.arc(pos.x, capY + d * 0.24, 1.2, 0, Math.PI * 2);
+          ctx.fill();
+        }
+
         // hover ring
-        if (hovered && matchesScanner) {
+        if (hovered && scanState.isLit) {
           ctx.strokeStyle = `rgba(${r},${g},${b},0.8)`;
           ctx.lineWidth = 1.8;
           ctx.beginPath();
@@ -306,17 +484,19 @@ function DynamicTopology({
         }
 
         // energy particles
-        for (let p = 0; p < 3; p++) {
-          const prog = ((scanTime / 600 + p * 0.35) % 1);
-          const py = groundY - h * prog;
-          ctx.fillStyle = matchesScanner ? `rgba(255,255,255,0.55)` : 'rgba(255,255,255,0.12)';
-          ctx.beginPath();
-          ctx.arc(pos.x, py, 1.6, 0, Math.PI * 2);
-          ctx.fill();
+        if (scanState.shouldPulse) {
+          for (let p = 0; p < 3; p++) {
+            const prog = ((scanTime / 600 + p * 0.35) % 1);
+            const py = groundY - h * prog;
+            ctx.fillStyle = `rgba(255,255,255,${0.22 + 0.2 * (1 - prog)})`;
+            ctx.beginPath();
+            ctx.roundRect(pos.x - w * 0.38, py, w * 0.76, 1.3, 1);
+            ctx.fill();
+          }
         }
 
         // HUD label
-        if (matchesScanner && (col.gx + col.gy) % 6 === 0) {
+        if (scanState.isLit && (col.gx + col.gy) % 6 === 0) {
           const lx = pos.x + w + 8;
           const ly = topY - 14;
           ctx.fillStyle = dark ? 'rgba(4,14,26,0.72)' : 'rgba(255,255,255,0.82)';
@@ -334,20 +514,17 @@ function DynamicTopology({
           ctx.fillText(`${col.version.totalScore.toFixed(1)}分 ${col.version.status}`, lx + 5, ly + 21);
         }
       }
-      visibleColsRef.current = scannedCols;
+      visibleColsRef.current = litCols;
 
-      // topology network between scanned columns
-      for (let i = 0; i < scannedCols.length; i++) {
-        const a = scannedCols[i];
-        for (let j = i + 1; j < scannedCols.length; j++) {
-          const b = scannedCols[j];
-          const dx = Math.abs(a.col.gx - b.col.gx);
-          const dy = Math.abs(a.col.gy - b.col.gy);
-          if (dx + dy > 3) continue;
-          if (dx === 0 && dy > 1) continue;
-          const aMatches = scannerRisk === 'ALL' || a.col.version.riskLevel === scannerRisk;
-          const bMatches = scannerRisk === 'ALL' || b.col.version.riskLevel === scannerRisk;
-          if (scannerFocus && (!aMatches || !bMatches)) continue;
+      // topology network between scanned and lit columns
+      for (let i = 0; i < litCols.length; i++) {
+        const a = litCols[i];
+        for (let j = i + 1; j < litCols.length; j++) {
+          const b = litCols[j];
+          const gridDx = Math.abs(a.col.gx - b.col.gx);
+          const gridDy = Math.abs(a.col.gy - b.col.gy);
+          if (gridDx + gridDy > 3) continue;
+          if (gridDx === 0 && gridDy > 1) continue;
           const sameSys = a.col.version.sysId === b.col.version.sysId;
           const alpha = sameSys ? 0.2 : 0.07;
           ctx.strokeStyle = sameSys
@@ -438,7 +615,7 @@ function DynamicTopology({
       canvas.removeEventListener('mousedown', onDown);
       canvas.removeEventListener('mouseleave', onLeave);
     };
-  }, [nav, scannerRisk, scannerSpeed]);
+  }, [nav, scannerRisk]);
 
   return (
     <div ref={wrap} className="l1-dynamic-topology">

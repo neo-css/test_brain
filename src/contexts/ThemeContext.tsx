@@ -1,5 +1,3 @@
-'use client';
-
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { readStoredAppearance, resolveTheme, writeStoredAppearance, type ThemeAppearance, type ResolvedTheme } from './themeHelpers';
 

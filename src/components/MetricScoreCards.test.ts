@@ -69,7 +69,7 @@ describe('buildMetricRadarPoints', () => {
 });
 
 describe('MetricScoreCards', () => {
-  it('renders metric scores as a radar chart with animated points and labels', () => {
+  it('renders radar with outer hexagon ring, labels with line wrapping, and scores', () => {
     const html = renderToStaticMarkup(
       createElement(MetricScoreCards, {
         version: makeVersion([
@@ -80,16 +80,14 @@ describe('MetricScoreCards', () => {
       }),
     );
 
+    expect(html).toContain('class="metric-radar-outer-ring"');
+    expect(html).toContain('metric-radar-outer-dot');
+    expect(html).toContain('class="metric-radar-label-group metric-radar-label-animated"');
+    expect(html).toContain('class="metric-radar-label-name"');
+    expect(html).toContain('class="metric-radar-label-score metric-radar-risk-medium"');
     expect(html).toContain('class="metric-radar-score metric-radar-score-animated"');
     expect(html).toContain('class="metric-radar-dot metric-radar-dot-animated metric-radar-risk-medium"');
-    expect(html).toContain('foreignObject');
-    expect(html).toContain('width="112"');
-    expect(html).toContain('height="46"');
-    expect(html).toContain('class="metric-radar-point-label metric-radar-label-animated"');
-    expect(html).toContain('class="metric-radar-label-name"');
-    expect(html).toContain('class="metric-radar-label-score"');
     expect(html).toContain('aria-label="版本变更风险，得分 4.4，准入阶段 / 版本质量"');
-    expect(html).toContain('title="版本变更风险，得分 4.4，准入阶段 / 版本质量"');
-    expect(html).not.toContain('class="metric-radar-labels"');
+    expect(html).not.toContain('foreignObject');
   });
 });

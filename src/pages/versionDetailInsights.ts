@@ -1,4 +1,4 @@
-import { formatDateTime, type MetricFeatureValue, type MetricGroup, type MetricItem, type RiskLevel, type VersionDetail } from '../data/versionMock';
+import { formatDateTime, RISK_WEIGHT, type MetricFeatureValue, type MetricGroup, type MetricItem, type RiskLevel, type VersionDetail } from '../data/versionMock';
 
 export interface DetailFact {
   label: string;
@@ -72,12 +72,6 @@ export interface VersionDetailInsights {
   focusItems: FocusItem[];
 }
 
-const RISK_WEIGHT: Record<string, number> = {
-  HIGH: 3,
-  MEDIUM: 2,
-  LOW: 1,
-};
-
 const TARGET_WEIGHT: Record<string, number> = {
   VERSION_QUALITY: 2,
   TEST_BEHAVIOR: 1,
@@ -113,7 +107,8 @@ const FEATURE_LABELS: Record<string, string> = {
 };
 
 function riskWeight(riskLevel?: RiskLevel) {
-  return RISK_WEIGHT[String(riskLevel ?? 'LOW')] ?? 0;
+  const key = riskLevel ?? 'LOW';
+  return RISK_WEIGHT[key] ?? 0;
 }
 
 function asDisplayValue(value: MetricFeatureValue): string {

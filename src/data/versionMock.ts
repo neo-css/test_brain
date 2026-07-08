@@ -1,4 +1,10 @@
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | string;
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+
+export const RISK_WEIGHT: Record<RiskLevel, number> = {
+  HIGH: 3,
+  MEDIUM: 2,
+  LOW: 1,
+};
 
 export type MetricFeatureValue =
   | string
@@ -382,26 +388,79 @@ const mockPeople = [
 
 type KnownRiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
 
-const mockStatuses = ['测试中', '阻塞中', '待回归', '准入中'];
 const mockReleaseTypes = ['迭代发布', '灰度发布', '紧急修复', '专项回归'];
-const mockRisks: KnownRiskLevel[] = ['LOW', 'MEDIUM', 'HIGH', 'LOW', 'MEDIUM'];
+const mockPhaseProfiles: {
+  status: string;
+  progress: number;
+  risks: KnownRiskLevel[];
+  scoreBase: Record<KnownRiskLevel, number>;
+}[] = [
+  {
+    status: '准入中',
+    progress: 0.18,
+    risks: ['LOW', 'MEDIUM', 'LOW', 'MEDIUM', 'HIGH'],
+    scoreBase: { LOW: 84, MEDIUM: 73, HIGH: 61 },
+  },
+  {
+    status: '测试中',
+    progress: 0.52,
+    risks: ['LOW', 'MEDIUM', 'LOW', 'HIGH', 'MEDIUM'],
+    scoreBase: { LOW: 81, MEDIUM: 70, HIGH: 59 },
+  },
+  {
+    status: '阻塞中',
+    progress: 0.38,
+    risks: ['HIGH', 'MEDIUM', 'HIGH', 'MEDIUM', 'LOW'],
+    scoreBase: { LOW: 76, MEDIUM: 66, HIGH: 54 },
+  },
+  {
+    status: '待回归',
+    progress: 0.76,
+    risks: ['MEDIUM', 'LOW', 'MEDIUM', 'HIGH', 'LOW'],
+    scoreBase: { LOW: 86, MEDIUM: 74, HIGH: 62 },
+  },
+  {
+    status: '待发布',
+    progress: 0.9,
+    risks: ['LOW', 'LOW', 'MEDIUM', 'LOW', 'HIGH'],
+    scoreBase: { LOW: 88, MEDIUM: 78, HIGH: 65 },
+  },
+];
 
 function pad(value: number) {
   return String(value).padStart(2, '0');
+}
+
+function formatMockDateTime(date: Date, separator: ' ' | 'T') {
+  const month = pad(date.getMonth() + 1);
+  const day = pad(date.getDate());
+  const hour = pad(date.getHours());
+  const minute = pad(date.getMinutes());
+  return `2026-${month}-${day}${separator}${hour}:${minute}:00`;
+}
+
+function buildMockSnapshotTime(startDay: number, endDay: number, progress: number, index: number) {
+  const start = new Date(2026, 5, startDay, 14, 0, 0);
+  const end = new Date(2026, 5, endDay, 18, 0, 0);
+  const jitter = ((index % 3) - 1) * 0.035;
+  const snapshotProgress = Math.min(0.96, Math.max(0.08, progress + jitter));
+  return formatMockDateTime(new Date(start.getTime() + (end.getTime() - start.getTime()) * snapshotProgress), 'T');
 }
 
 function generateMockVersions(count: number): VersionDetail[] {
   return Array.from({ length: count }, (_, index) => {
     const system = mockSystems[index % mockSystems.length];
     const people = mockPeople[index % mockPeople.length];
-    const riskLevel = mockRisks[index % mockRisks.length];
-    const scoreBase = riskLevel === 'HIGH' ? 58 : riskLevel === 'MEDIUM' ? 70 : 82;
-    const totalScore = scoreBase + ((index * 7) % 12) + (index % 2 === 0 ? 0.4 : 0.8);
+    const phase = mockPhaseProfiles[index % mockPhaseProfiles.length];
+    const riskLevel = phase.risks[Math.floor(index / mockPhaseProfiles.length) % phase.risks.length];
+    const scoreBase = phase.scoreBase[riskLevel];
+    const totalScore = Math.min(96, scoreBase + ((index * 7) % 9) + (index % 2 === 0 ? 0.4 : 0.8));
     const day = 1 + (index % 24);
+    const endDayNumber = Math.min(day + 5 + (index % 4), 28);
     const startDay = pad(day);
-    const endDay = pad(Math.min(day + 5 + (index % 4), 28));
-    const snapshotHour = pad(8 + (index % 10));
+    const endDay = pad(endDayNumber);
     const patchId = 64500 + index;
+    const releaseType = mockReleaseTypes[index % mockReleaseTypes.length];
 
     return cloneVersion({
       patchId,
@@ -426,10 +485,10 @@ function generateMockVersions(count: number): VersionDetail[] {
       planedTestFromTime: `2026-06-${startDay} 09:00:00`,
       planedTestToTime: `2026-06-${endDay} 18:00:00`,
       auditTime: `2026-06-${startDay} 16:30:00`,
-      snapshotsTs: `2026-06-${endDay}T${snapshotHour}:30:00`,
-      summary: `${system.sysId}系统 v${1 + (index % 6)}.${index % 10} ${mockReleaseTypes[index % mockReleaseTypes.length]}，${system.name}在测版本 ${patchId}`,
-      status: mockStatuses[index % mockStatuses.length],
-      releaseType: mockReleaseTypes[index % mockReleaseTypes.length],
+      snapshotsTs: buildMockSnapshotTime(day, endDayNumber, phase.progress, index),
+      summary: `${system.sysId}系统 v${1 + (index % 6)}.${index % 10} ${releaseType}，${system.name}${phase.status}版本 ${patchId}`,
+      status: phase.status,
+      releaseType,
     });
   });
 }

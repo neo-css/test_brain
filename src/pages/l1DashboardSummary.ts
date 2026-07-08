@@ -1,4 +1,4 @@
-import { formatDateTime, type VersionDetail } from '../data/versionMock';
+import { formatDateTime, RISK_WEIGHT, type VersionDetail } from '../data/versionMock';
 import { summarizeRiskCounts } from './versionListFilters';
 
 export interface L1DashboardSummary {
@@ -13,12 +13,6 @@ export interface L1DashboardSummary {
   highRiskRatio: number;
   priorityVersions: VersionDetail[];
 }
-
-const riskWeight: Record<string, number> = {
-  HIGH: 3,
-  MEDIUM: 2,
-  LOW: 1,
-};
 
 export function buildL1DashboardSummary(versions: VersionDetail[]): L1DashboardSummary {
   const totalVersions = versions.length;
@@ -42,7 +36,7 @@ export function buildL1DashboardSummary(versions: VersionDetail[]): L1DashboardS
 
   const priorityVersions = [...versions]
     .sort((a, b) => {
-      const riskDiff = (riskWeight[b.riskLevel] ?? 0) - (riskWeight[a.riskLevel] ?? 0);
+      const riskDiff = (RISK_WEIGHT[b.riskLevel] ?? 0) - (RISK_WEIGHT[a.riskLevel] ?? 0);
       if (riskDiff !== 0) return riskDiff;
       return a.totalScore - b.totalScore;
     })

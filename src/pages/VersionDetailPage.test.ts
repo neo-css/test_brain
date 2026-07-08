@@ -23,7 +23,7 @@ describe('VersionDetailPage cockpit layout', () => {
     expect(html).toContain('class="cockpit-wing cockpit-wing-right"');
     expect(html.indexOf('cockpit-wing cockpit-wing-left')).toBeLessThan(html.indexOf('cockpit-center'));
     expect(html.indexOf('cockpit-center')).toBeLessThan(html.indexOf('cockpit-wing cockpit-wing-right'));
-    expect(html).toContain('class="metric-radar-chart"');
+    expect(html).toContain('metric-radar-chart');
     expect(html).toContain('class="detail-header-actions"');
     expect(html).toContain('class="detail-return-link" href="/versions"');
     expect(html).not.toContain('class="back-link"');

@@ -1,11 +1,22 @@
 import { describe, expect, it } from 'vitest';
+import { getTopologyColumnProgress } from '../components/DynamicTopologyLogic';
 import { formatDateTime, formatScore, getVersionByPatchId, riskLabel, versionDetails } from './versionMock';
 
 describe('version mock data', () => {
   it('provides a large in-test version set for list filtering and density checks', () => {
     expect(versionDetails.length).toBeGreaterThanOrEqual(80);
     expect(new Set(versionDetails.map((version) => version.riskLevel))).toEqual(new Set(['LOW', 'MEDIUM', 'HIGH']));
-    expect(new Set(versionDetails.map((version) => version.status)).size).toBeGreaterThanOrEqual(3);
+    expect(new Set(versionDetails.map((version) => version.status))).toEqual(
+      new Set(['准入中', '测试中', '阻塞中', '待回归', '待发布']),
+    );
+  });
+
+  it('spreads mock snapshots across version phases so topology towers have varied heights', () => {
+    const progressValues = versionDetails.map((version) => getTopologyColumnProgress(version));
+
+    expect(progressValues.filter((progress) => progress <= 0.3).length).toBeGreaterThanOrEqual(18);
+    expect(progressValues.filter((progress) => progress > 0.3 && progress <= 0.7).length).toBeGreaterThanOrEqual(28);
+    expect(progressValues.filter((progress) => progress > 0.7).length).toBeGreaterThanOrEqual(18);
   });
 
   it('provides multiple in-test version records derived from the backend detail shape', () => {

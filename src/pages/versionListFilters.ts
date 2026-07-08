@@ -1,4 +1,4 @@
-import { VersionDetail } from '../data/versionMock';
+import { RISK_WEIGHT, VersionDetail } from '../data/versionMock';
 
 export type RiskFilter = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
 export type StatusFilter = 'ALL' | string;
@@ -10,12 +10,6 @@ export interface VersionListFilters {
   status: StatusFilter;
   sort: VersionSort;
 }
-
-const riskWeight: Record<string, number> = {
-  HIGH: 3,
-  MEDIUM: 2,
-  LOW: 1,
-};
 
 function normalize(value: unknown) {
   return String(value ?? '').trim().toLowerCase();
@@ -38,7 +32,7 @@ function matchesQuery(version: VersionDetail, query: string) {
 }
 
 function compareByRisk(first: VersionDetail, second: VersionDetail) {
-  const riskDiff = (riskWeight[second.riskLevel] ?? 0) - (riskWeight[first.riskLevel] ?? 0);
+  const riskDiff = (RISK_WEIGHT[second.riskLevel] ?? 0) - (RISK_WEIGHT[first.riskLevel] ?? 0);
   if (riskDiff !== 0) return riskDiff;
   return second.totalScore - first.totalScore;
 }

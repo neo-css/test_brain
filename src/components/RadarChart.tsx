@@ -1,25 +1,9 @@
 import { CSSProperties } from 'react';
 import { MetricGroup } from '../data/versionMock';
+import { polarPoint, pointsToString, type RadarPoint } from './radarUtils';
 
 interface RadarChartProps {
   groups: MetricGroup[];
-}
-
-interface RadarPoint {
-  x: number;
-  y: number;
-}
-
-function polarPoint(index: number, total: number, radius: number, center: number): RadarPoint {
-  const angle = -Math.PI / 2 + (2 * Math.PI * index) / total;
-  return {
-    x: center + Math.cos(angle) * radius,
-    y: center + Math.sin(angle) * radius,
-  };
-}
-
-function pointsToString(points: RadarPoint[]) {
-  return points.map((point) => `${point.x},${point.y}`).join(' ');
 }
 
 export function buildRadarPoints(groups: MetricGroup[], center: number, maxRadius: number): RadarPoint[] {
