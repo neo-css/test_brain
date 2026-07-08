@@ -36,7 +36,7 @@ export interface TedSbrainClient {
   request<T>(path: string, options?: TedSbrainRequestOptions): Promise<T>;
 }
 
-function appendQuery(url: string, query: Record<string, QueryValue> = {}): string {
+export function appendQuery(url: string, query: Record<string, QueryValue> = {}): string {
   const parsedUrl = new URL(url);
 
   Object.entries(query).forEach(([key, value]) => {
@@ -64,7 +64,7 @@ function isTedSbrainResponse<T>(value: unknown): value is TedSbrainResponse<T> {
   );
 }
 
-async function parseResponse<T>(response: Response): Promise<T> {
+export async function parseResponse<T>(response: Response): Promise<T> {
   let payload: unknown;
 
   try {
