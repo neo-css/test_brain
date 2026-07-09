@@ -1,5 +1,6 @@
 node_modules/
 dist/
 .mock-dist/
+.worktrees/
 .DS_Store
 *.tsbuildinfo
