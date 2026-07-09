@@ -16,8 +16,8 @@ import {
 } from './client';
 
 describe('ted-sbrain API client', () => {
-  it('uses the configured backend base URL when no env value is provided', () => {
-    expect(getTedSbrainApiBaseUrl({})).toBe('http://172.21.126.221:49152');
+  it('uses same-origin proxy mode when no env value is provided', () => {
+    expect(getTedSbrainApiBaseUrl({})).toBe('');
   });
 
   it('uses VITE_TED_SBRAIN_API_BASE_URL when provided', () => {
@@ -87,6 +87,23 @@ describe('ted-sbrain API client', () => {
     await client.request('/scoreSnapshot/list', { query: { riskLevel: 'LOW' } });
 
     expect(fetcher).toHaveBeenCalledWith('/ted-sbrain/scoreSnapshot/list?riskLevel=LOW', {
+      method: 'GET',
+      headers: { Accept: 'application/json' },
+    });
+  });
+
+  it('uses same-origin proxy URLs for all default client requests', async () => {
+    const fetcher = vi.fn(async () =>
+      new Response(JSON.stringify({ result: true, message: 'success', data: {}, criticalProcess: {} }), {
+        status: 200,
+        headers: { 'Content-Type': 'application/json' },
+      }),
+    );
+    const client = createTedSbrainClient({ fetcher });
+
+    await client.request('/scoreSnapshot/queryLatestToday', { query: { page: 1, pageSize: 200 } });
+
+    expect(fetcher).toHaveBeenCalledWith('/ted-sbrain/scoreSnapshot/queryLatestToday?page=1&pageSize=200', {
       method: 'GET',
       headers: { Accept: 'application/json' },
     });

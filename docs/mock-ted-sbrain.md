@@ -36,22 +36,22 @@ MOCK_PORT=49153 npm run mock
 The frontend loads version collection and detail data through `src/services/tedSbrain/api.ts`.
 Runtime page code does not import mock fixtures directly.
 
-Use the direct browser mock when CORS-friendly local calls are acceptable:
+By default, browser requests stay same-origin on `/ted-sbrain/...`, and Vite proxies them to the real backend:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL=http://localhost:49152 npm run dev
+npm run dev
 ```
 
-Use same-origin proxy mode when browser requests should stay on `/ted-sbrain/...`:
+Use a local mock service by changing the proxy target:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL= VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
 ```
 
-Use the real backend by changing only the base URL:
+Use a different backend by changing the proxy target. Avoid setting `VITE_TED_SBRAIN_API_BASE_URL` to a remote absolute URL unless that backend explicitly enables browser CORS.
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL=http://172.21.126.221:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://172.21.126.221:49152 npm run dev
 ```
 
 ## Supported endpoints

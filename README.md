@@ -48,6 +48,9 @@ npm install
 # 启动开发服务器
 npm run dev
 
+# 默认通过同源 /ted-sbrain 代理访问后端，避免浏览器 CORS
+# 如需切换后端：VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
+
 # 运行测试
 npm test
 

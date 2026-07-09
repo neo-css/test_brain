@@ -1165,22 +1165,22 @@ MOCK_PORT=49153 npm run mock
 
 ## Frontend Target Selection
 
-Direct browser calls to the mock:
+Same-origin browser calls to the default backend through Vite proxy:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL=http://localhost:49152 npm run dev
+npm run dev
 ```
 
-Same-origin browser calls through Vite proxy:
+Same-origin browser calls to the mock through Vite proxy:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL= VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
 ```
 
-Real backend calls:
+Different backend target:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL=http://172.21.126.221:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://172.21.126.221:49152 npm run dev
 ```
 
 Frontend code should call `/ted-sbrain/...` paths through the shared API client. Unprefixed mock routes such as `/health` and `/metric/patches/12345/score` are local development conveniences only.

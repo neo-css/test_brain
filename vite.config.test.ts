@@ -25,6 +25,10 @@ describe('vite config', () => {
         target: 'http://localhost:49152',
         changeOrigin: true,
       });
+      expect(resolvedConfig.preview?.proxy?.['/ted-sbrain']).toMatchObject({
+        target: 'http://localhost:49152',
+        changeOrigin: true,
+      });
     } finally {
       if (previousProxyTarget === undefined) {
         delete process.env.VITE_TED_SBRAIN_PROXY_TARGET;
@@ -34,14 +38,21 @@ describe('vite config', () => {
     }
   });
 
-  it('does not configure a ted-sbrain proxy without VITE_TED_SBRAIN_PROXY_TARGET', async () => {
+  it('uses the default ted-sbrain proxy target without VITE_TED_SBRAIN_PROXY_TARGET', async () => {
     const previousProxyTarget = process.env.VITE_TED_SBRAIN_PROXY_TARGET;
     delete process.env.VITE_TED_SBRAIN_PROXY_TARGET;
 
     try {
       const resolvedConfig = await resolveConfig();
 
-      expect(resolvedConfig.server?.proxy?.['/ted-sbrain']).toBeUndefined();
+      expect(resolvedConfig.server?.proxy?.['/ted-sbrain']).toMatchObject({
+        target: 'http://172.21.126.221:49152',
+        changeOrigin: true,
+      });
+      expect(resolvedConfig.preview?.proxy?.['/ted-sbrain']).toMatchObject({
+        target: 'http://172.21.126.221:49152',
+        changeOrigin: true,
+      });
     } finally {
       if (previousProxyTarget === undefined) {
         delete process.env.VITE_TED_SBRAIN_PROXY_TARGET;

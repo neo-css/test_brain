@@ -1,4 +1,4 @@
-export const DEFAULT_TED_SBRAIN_API_BASE_URL = 'http://172.21.126.221:49152';
+export const DEFAULT_TED_SBRAIN_API_BASE_URL = '';
 export const TED_SBRAIN_PATH_PREFIX = '/ted-sbrain';
 
 export interface TedSbrainEnv {

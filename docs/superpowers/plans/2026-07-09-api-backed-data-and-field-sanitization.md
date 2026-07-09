@@ -1437,19 +1437,19 @@ Mock service:
 
 ```bash
 npm run mock
-VITE_TED_SBRAIN_API_BASE_URL=http://localhost:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
 ```
 
 Real service:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL=http://172.21.126.221:49152 npm run dev
+VITE_TED_SBRAIN_PROXY_TARGET=http://172.21.126.221:49152 npm run dev
 ```
 
 Same-origin proxy mode:
 
 ```bash
-VITE_TED_SBRAIN_API_BASE_URL= VITE_TED_SBRAIN_PROXY_TARGET=http://172.21.126.221:49152 npm run dev
+npm run dev
 ```
 
 In proxy mode browser requests use `/ted-sbrain/...`, and Vite forwards them to the configured target.
