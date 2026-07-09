@@ -3,26 +3,57 @@ import { Link } from 'react-router-dom';
 import DynamicTopology from '../components/DynamicTopology';
 import type { ScannerRisk } from '../components/DynamicTopologyLogic';
 import ThemeSwitcher from '../components/ThemeSwitcher';
-import { formatScore, riskLabel, versionDetails } from '../data/versionMock';
+import { formatScore, riskLabel } from '../data/versionMock';
+import { useCollectionVersions } from '../services/tedSbrain/useTedSbrainVersions';
 import { buildL1DashboardSummary } from './l1DashboardSummary';
 
-const fromHomeState = { from: '/', fromLabel: '返回测试大脑' };
-const topologyRiskFilters: ScannerRisk[] = ['ALL', 'HIGH', 'MEDIUM', 'LOW'];
+const fromHomeState = { from: '/', fromLabel: '返回首页' };
+const topologyRiskFilters: ScannerRisk[] = ['ALL', 'HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'];
+
+interface L1DashboardPageProps {
+  mode?: 'home' | 'version-overview';
+}
 
 function riskClass(riskLevel: string) {
   return `risk-${riskLevel.toLowerCase()}`;
 }
 
 function topologyFilterLabel(filter: ScannerRisk) {
-  if (filter === 'ALL') return '下发全部探测器';
-  return `下发${riskLabel(filter)}探测器`;
+  if (filter === 'ALL') return '全部风险';
+  return riskLabel(filter);
 }
 
-function L1DashboardPage() {
+function L1DashboardPage({ mode = 'home' }: L1DashboardPageProps) {
   const [topologyRisk, setTopologyRisk] = useState<ScannerRisk>('ALL');
   const [scannerSpeed, setScannerSpeed] = useState(1);
-  const summary = buildL1DashboardSummary(versionDetails);
-  const l2State = { from: '/', fromLabel: '返回测试大脑' };
+  const { status, versions, error } = useCollectionVersions();
+  const summary = buildL1DashboardSummary(versions);
+  const l2State = { from: '/', fromLabel: '返回首页' };
+  const detailState = mode === 'version-overview'
+    ? { from: '/versions/overview', fromLabel: '返回态势感知' }
+    : { from: '/', fromLabel: '返回首页' };
+
+  if (status === 'loading') {
+    return (
+      <main className="l1-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载中</h1>
+          <p>正在从 ted-sbrain 服务获取最新评分数据。</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (status === 'error') {
+    return (
+      <main className="l1-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载失败</h1>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="l1-page">
@@ -30,11 +61,11 @@ function L1DashboardPage() {
 
       <header className="l1-command-header">
         <Link className="l1-brand-lockup" to="/versions" state={l2State}>
-          <span>L1 COMMAND</span>
-          <strong>全域在测版本态势</strong>
+          <span>VERSION MODULE</span>
+          <strong>态势感知</strong>
         </Link>
         <div className="l1-header-actions">
-          <Link className="l1-header-link" to="/versions" state={l2State}>进入 L2 态势感知</Link>
+          <Link className="l1-header-link" to="/versions" state={l2State}>进入版本列表</Link>
           <ThemeSwitcher />
         </div>
       </header>
@@ -88,7 +119,7 @@ function L1DashboardPage() {
                 className={`l1-priority-row ${riskClass(version.riskLevel)}`}
                 key={version.patchId}
                 to={`/versions/${version.patchId}`}
-                state={fromHomeState}
+                state={detailState}
               >
                 <span>{version.sysId}</span>
                 <div>
@@ -107,44 +138,55 @@ function L1DashboardPage() {
               <span>AI GUARDIAN MAP</span>
               <strong>全域扫描拓扑</strong>
             </div>
-            <div className="l1-risk-filter" role="group" aria-label="拓扑风险扫描筛选">
-              {topologyRiskFilters.map((filter) => (
-                <button
-                  className={topologyRisk === filter ? 'active' : ''}
-                  key={filter}
-                  type="button"
-                  aria-label={topologyFilterLabel(filter)}
-                  onClick={() => setTopologyRisk(filter)}
+            <div className="l1-canvas-controls">
+              <label className="l1-risk-filter">
+                <span>风险筛选</span>
+                <select
+                  value={topologyRisk}
+                  aria-label="拓扑风险筛选"
+                  onChange={(event) => setTopologyRisk(event.target.value as ScannerRisk)}
                 >
-                  {topologyFilterLabel(filter)}
-                </button>
-              ))}
+                {topologyRiskFilters.map((filter) => (
+                  <option
+                    key={filter}
+                    value={filter}
+                  >
+                    {topologyFilterLabel(filter)}
+                  </option>
+                ))}
+                </select>
+              </label>
+              <label className="l1-speed-control">
+                <span>扫描速度</span>
+                <input
+                  type="range"
+                  min="0.2"
+                  max="1"
+                  step="0.1"
+                  value={scannerSpeed}
+                  aria-label="调整扫描速度"
+                  onChange={(event) => setScannerSpeed(Number(event.target.value))}
+                />
+                <strong>{scannerSpeed.toFixed(1)}x</strong>
+              </label>
             </div>
-            <label className="l1-speed-control">
-              <span>扫描速度</span>
-              <input
-                type="range"
-                min="0.2"
-                max="1"
-                step="0.1"
-                value={scannerSpeed}
-                aria-label="调整扫描速度"
-                onChange={(event) => setScannerSpeed(Number(event.target.value))}
-              />
-              <strong>{scannerSpeed.toFixed(1)}x</strong>
-            </label>
           </div>
           <div className="l1-canvas-card">
-            <DynamicTopology versions={versionDetails} scannerRisk={topologyRisk} scannerSpeed={scannerSpeed} />
+            <DynamicTopology
+              versions={versions}
+              scannerRisk={topologyRisk}
+              scannerSpeed={scannerSpeed}
+              detailState={detailState}
+            />
           </div>
           <div className="l1-canvas-footer" aria-label="拓扑风险图例">
-            {(['HIGH', 'MEDIUM', 'LOW'] as const).map((riskLevel) => (
+            {(['HIGH', 'MEDIUM', 'LOW', 'UNKNOWN'] as const).map((riskLevel) => (
               <span className={riskClass(riskLevel)} key={riskLevel}>
                 <i aria-hidden="true" />
                 {riskLabel(riskLevel)}
               </span>
             ))}
-            <em>单击光柱节点进入 L3</em>
+            <em>单击光柱节点进入版本详情</em>
           </div>
         </section>
       </section>

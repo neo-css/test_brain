@@ -42,7 +42,7 @@ function VersionOverviewPanel({
   onStatusChange,
   onSortChange,
   showBackLink = false,
-  backLabel = '返回 L1',
+  backLabel = '返回首页',
   children,
 }: VersionOverviewPanelProps) {
   return (
@@ -92,6 +92,7 @@ function VersionOverviewPanel({
               <option value="HIGH">高风险</option>
               <option value="MEDIUM">中风险</option>
               <option value="LOW">低风险</option>
+              <option value="UNKNOWN">未知风险</option>
             </select>
           </label>
           <label>

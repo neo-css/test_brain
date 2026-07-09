@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import type { VersionDetail } from '../data/versionMock';
 import { buildVersionDetailInsights } from './versionDetailInsights';
 
@@ -184,6 +184,10 @@ function makeVersion(overrides: Partial<VersionDetail> = {}): VersionDetail {
 }
 
 describe('buildVersionDetailInsights', () => {
+  afterEach(() => {
+    vi.useRealTimers();
+  });
+
   it('surfaces phase, data-dimension, and evaluation-target groups for L3 diagnostics', () => {
     const insights = buildVersionDetailInsights(makeVersion());
 
@@ -210,6 +214,52 @@ describe('buildVersionDetailInsights', () => {
     );
   });
 
+  it('does not expose raw API codes, mock provenance, URLs, accounts, or unknown JSON keys in evidence facts', () => {
+    const insights = buildVersionDetailInsights(makeVersion({
+      metrics: [
+        {
+          metricCode: 'CHANGES_RISK',
+          metricName: 'mock字段泄漏检查',
+          phase: 'DEV',
+          phaseName: '开发阶段',
+          dataDimension: 'QUALITY',
+          dataDimensionName: '质量风险',
+          evalTarget: 'PATCH',
+          evalTargetName: '版本',
+          calcScore: 92,
+          actualScore: 90,
+          riskLevel: 'LOW',
+          features: {
+            数据来源: 'mock服务',
+            是否稳定样例: true,
+            changeCount: { value: 23 },
+            defectNum: 5,
+            unknownRawKey: 'raw-value',
+          },
+          description: '可读的指标说明。',
+          detailUrl: '/detail/changes',
+        },
+      ],
+    }));
+
+    const rendered = insights.evidenceRows[0].facts.map((fact) => `${fact.label}:${fact.value}`).join('|');
+
+    expect(rendered).toContain('指标说明:可读的指标说明。');
+    expect(rendered).toContain('缺陷数:5');
+    expect(rendered).toContain('特征值:23');
+    expect(rendered).not.toContain('指标编码');
+    expect(rendered).not.toContain('阶段编码');
+    expect(rendered).not.toContain('数据维度编码');
+    expect(rendered).not.toContain('评价对象编码');
+    expect(rendered).not.toContain('详情链接');
+    expect(rendered).not.toContain('mock服务');
+    expect(rendered).not.toContain('是否稳定样例');
+    expect(rendered).not.toContain('数据来源');
+    expect(rendered).not.toContain('changeCount');
+    expect(rendered).not.toContain('unknownRawKey');
+    expect(rendered).not.toContain('raw-value');
+  });
+
   it('builds chart-ready risk, coverage, and schedule payloads', () => {
     const insights = buildVersionDetailInsights(makeVersion());
 
@@ -227,10 +277,29 @@ describe('buildVersionDetailInsights', () => {
       { label: '计划测试', startLabel: '2026-06-09 09:00', endLabel: '2026-06-17 18:00', durationDays: 9 },
       { label: '实际测试', startLabel: '2026-06-10 15:00', endLabel: '2026-06-18 18:00', durationDays: 9 },
     ]);
+    expect(insights.chartCards.snapshotMarker.label).toBe('当前时间');
+  });
+
+  it('uses exact time proportions and current time for the timeline marker', () => {
+    vi.useFakeTimers();
+    vi.setSystemTime(new Date('2026-07-09T12:00:00'));
+
+    const insights = buildVersionDetailInsights(makeVersion({
+      planedTestFromTime: '2026-07-09 00:00:00',
+      planedTestToTime: '2026-07-10 00:00:00',
+      actualTestFromTime: '2026-07-09 06:00:00',
+      actualTestToTime: '2026-07-09 06:14:24',
+      snapshotsTs: '2026-07-09T08:00:00',
+    }));
+
+    expect(insights.chartCards.scheduleBars).toMatchObject([
+      { label: '计划测试', offsetPercent: 0, widthPercent: 100 },
+      { label: '实际测试', offsetPercent: 25, widthPercent: 1 },
+    ]);
     expect(insights.chartCards.snapshotMarker).toMatchObject({
-      label: '快照',
-      timeLabel: '2026-06-23 09:30',
-      offsetPercent: 100,
+      label: '当前时间',
+      timeLabel: '2026-07-09 12:00',
+      offsetPercent: 50,
     });
   });
 

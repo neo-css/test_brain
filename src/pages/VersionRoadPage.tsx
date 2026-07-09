@@ -1,7 +1,7 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import RoadSnakeCanvas from '../components/RoadSnakeCanvas';
 import VersionOverviewPanel from '../components/VersionOverviewPanel';
-import { versionDetails } from '../data/versionMock';
+import { useCollectionVersions } from '../services/tedSbrain/useTedSbrainVersions';
 import {
   filterAndSortVersions,
   getStatusOptions,
@@ -22,7 +22,8 @@ const QUICK_DAYS = [3, 7, 10, 30] as const;
 type QuickDays = (typeof QUICK_DAYS)[number];
 
 function VersionRoadPage() {
-  const anchor = useMemo(() => getDataAnchorDate(versionDetails), []);
+  const { status: loadStatus, versions, error } = useCollectionVersions();
+  const anchor = useMemo(() => getDataAnchorDate(versions), [versions]);
   const [rangeMode, setRangeMode] = useState<RangeMode>('QUICK');
   const [quickDays, setQuickDays] = useState<QuickDays>(10);
   const [fromDate, setFromDate] = useState<string>(anchor);
@@ -32,6 +33,11 @@ function VersionRoadPage() {
   const [status, setStatus] = useState('ALL');
   const [sort, setSort] = useState<VersionSort>('RISK');
 
+  useEffect(() => {
+    setFromDate(anchor);
+    setToDate(shiftDays(anchor, 9));
+  }, [anchor]);
+
   const window = useMemo(() => {
     if (rangeMode === 'QUICK') {
       return buildDayWindow(anchor, quickDays);
@@ -40,8 +46,8 @@ function VersionRoadPage() {
   }, [rangeMode, quickDays, fromDate, toDate, anchor]);
 
   const filteredVersions = useMemo(
-    () => filterAndSortVersions(versionDetails, { query, risk, status, sort }),
-    [query, risk, status, sort],
+    () => filterAndSortVersions(versions, { query, risk, status, sort }),
+    [versions, query, risk, status, sort],
   );
 
   const dayRows = useMemo(() => groupByDay(filteredVersions, window), [filteredVersions, window]);
@@ -56,19 +62,42 @@ function VersionRoadPage() {
     return summarizeRiskCounts(inWindow);
   }, [dayRows]);
 
-  const statusOptions = useMemo(() => getStatusOptions(versionDetails), []);
+  const statusOptions = useMemo(() => getStatusOptions(versions), [versions]);
+
+  if (loadStatus === 'loading') {
+    return (
+      <main className="page-shell road-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载中</h1>
+          <p>正在从 ted-sbrain 服务获取最新评分数据。</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (loadStatus === 'error') {
+    return (
+      <main className="page-shell road-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载失败</h1>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="page-shell road-page">
       <VersionOverviewPanel
-        title="版本态势"
-        subtitle={`数据锚点 ${anchor}，可在版本列表与版本态势之间切换，当前态势按发版日期展开。`}
+        title="版本轨迹"
+        subtitle={`数据锚点 ${anchor}，可在版本列表与版本轨迹之间切换，当前轨迹按发版日期展开。`}
         summaryItems={[
-          { label: '当前在测', value: versionDetails.length },
+          { label: '当前在测', value: versions.length },
           { label: '筛选结果', value: filteredVersions.length },
           { label: '高风险', value: riskCounts.HIGH },
           { label: '中风险', value: riskCounts.MEDIUM },
           { label: '低风险', value: riskCounts.LOW },
+          { label: '未知风险', value: riskCounts.UNKNOWN },
         ]}
         query={query}
         risk={risk}
@@ -80,7 +109,7 @@ function VersionRoadPage() {
         onStatusChange={setStatus}
         onSortChange={setSort}
         showBackLink
-        backLabel="返回 L1"
+        backLabel="返回首页"
       >
         <section className="road-range" aria-label="时间范围">
           <div className="road-range-quick" role="tablist" aria-label="时间快捷选项">
@@ -144,14 +173,13 @@ function VersionRoadPage() {
           </div>
         </section>
 
-        <section className="road-legend" aria-label="破损等级图例">
+        <section className="road-legend" aria-label="风险评级图例">
           <h3>图例</h3>
           <ul>
-            <li><span className="legend-dot damage-0" />≥ 85 完好</li>
-            <li><span className="legend-dot damage-1" />75–85 轻微</li>
-            <li><span className="legend-dot damage-2" />65–75 中度</li>
-            <li><span className="legend-dot damage-3" />55–65 严重</li>
-            <li><span className="legend-dot damage-4" />&lt; 55 抛锚</li>
+            <li><span className="legend-dot damage-0" />低风险 完好</li>
+            <li><span className="legend-dot damage-2" />中风险 中度</li>
+            <li><span className="legend-dot damage-3" />未知风险 待诊断</li>
+            <li><span className="legend-dot damage-4" />高风险 抛锚</li>
           </ul>
         </section>
       </VersionOverviewPanel>

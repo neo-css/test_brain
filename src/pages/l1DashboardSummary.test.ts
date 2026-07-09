@@ -52,7 +52,7 @@ describe('buildL1DashboardSummary', () => {
     expect(summary.totalVersions).toBe(4);
     expect(summary.averageScore).toBe(73.5);
     expect(summary.latestSnapshot).toBe('2026-06-24 09:00');
-    expect(summary.riskCounts).toEqual({ HIGH: 2, MEDIUM: 1, LOW: 1 });
+    expect(summary.riskCounts).toEqual({ HIGH: 2, MEDIUM: 1, LOW: 1, UNKNOWN: 0 });
     expect(summary.highRiskRatio).toBe(50);
     expect(summary.priorityVersions.map((version) => version.patchId)).toEqual([2, 4, 3]);
   });
@@ -62,7 +62,7 @@ describe('buildL1DashboardSummary', () => {
       totalVersions: 0,
       averageScore: 0,
       latestSnapshot: '--',
-      riskCounts: { HIGH: 0, MEDIUM: 0, LOW: 0 },
+      riskCounts: { HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 },
       highRiskRatio: 0,
       priorityVersions: [],
     });

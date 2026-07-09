@@ -83,10 +83,12 @@ function DynamicTopology({
   versions,
   scannerRisk = 'ALL',
   scannerSpeed = 1,
+  detailState,
 }: {
   versions: VersionDetail[];
   scannerRisk?: ScannerRisk;
   scannerSpeed?: number;
+  detailState?: { from: string; fromLabel: string };
 }) {
   const nav = useNavigate();
   const cvs = useRef<HTMLCanvasElement>(null);
@@ -590,7 +592,7 @@ function DynamicTopology({
     const onDown = (e: MouseEvent) => {
       const r = canvas.getBoundingClientRect();
       const h = hitTest(e.clientX - r.left, e.clientY - r.top);
-      if (h) nav(`/versions/${h.version.patchId}`, { state: { from: '/', fromLabel: '返回测试大脑' } });
+      if (h) nav(`/versions/${h.version.patchId}`, { state: detailState ?? { from: '/', fromLabel: '返回首页' } });
     };
     const onLeave = () => {
       hoverRef.current = null;
@@ -615,7 +617,7 @@ function DynamicTopology({
       canvas.removeEventListener('mousedown', onDown);
       canvas.removeEventListener('mouseleave', onLeave);
     };
-  }, [nav, scannerRisk]);
+  }, [detailState, nav, scannerRisk]);
 
   return (
     <div ref={wrap} className="l1-dynamic-topology">

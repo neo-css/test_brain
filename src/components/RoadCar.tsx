@@ -81,7 +81,7 @@ function RoadCar({ version }: RoadCarProps) {
   const carRef = useRef<HTMLAnchorElement>(null);
   const [tooltip, setTooltip] = useState<TooltipPos | null>(null);
   const rafRef = useRef<number | null>(null);
-  const damage = assignDamageLevel(version.totalScore);
+  const damage = assignDamageLevel(version.riskLevel);
   const risk = version.riskLevel.toLowerCase();
   const ariaLabel = `${version.sysId} 版本 ${version.patchId}，总分 ${formatScore(version.totalScore)}，${riskLabel(version.riskLevel)}，${damageLabel(damage)}`;
   const showMotionLines = damage === 0;

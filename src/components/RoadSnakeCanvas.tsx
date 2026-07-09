@@ -100,7 +100,7 @@ function RoadSnakeCanvas({ days }: RoadSnakeCanvasProps) {
   const snakePath = buildSnakePath(days);
 
   return (
-    <section className="snake-road-canvas" aria-label="版本态势图">
+    <section className="snake-road-canvas" aria-label="版本轨迹图">
       <svg className="snake-road-svg" viewBox={`0 0 ${VIEWBOX_WIDTH} ${canvasHeight}`} preserveAspectRatio="xMidYMin meet" aria-hidden="true">
         <defs>
           <filter id="snake-road-shadow" x="-20%" y="-20%" width="140%" height="140%">

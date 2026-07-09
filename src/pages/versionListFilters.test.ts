@@ -42,6 +42,7 @@ const versions = [
   makeVersion({ patchId: 1, totalScore: 88, riskLevel: 'LOW', sysId: 'TED', subNamedSystemName: '测试大脑系统', status: '测试中', snapshotsTs: '2026-06-20T09:00:00' }),
   makeVersion({ patchId: 2, totalScore: 62, riskLevel: 'HIGH', sysId: 'PAY', subNamedSystemName: '支付核心系统', status: '阻塞中', patchOwner: '赵六', snapshotsTs: '2026-06-24T09:00:00' }),
   makeVersion({ patchId: 3, totalScore: 74, riskLevel: 'MEDIUM', sysId: 'CRM', subNamedSystemName: '客户关系系统', status: '测试中', teamName: '业务平台部', snapshotsTs: '2026-06-22T09:00:00' }),
+  makeVersion({ patchId: 4, totalScore: 0, riskLevel: 'UNKNOWN', sysId: 'NEW', subNamedSystemName: '新接入系统', status: '准入中', snapshotsTs: '2026-06-25T09:00:00' }),
 ];
 
 describe('filterAndSortVersions', () => {
@@ -57,15 +58,21 @@ describe('filterAndSortVersions', () => {
     expect(result.map((version) => version.patchId)).toEqual([3]);
   });
 
+  it('filters unknown risk versions explicitly', () => {
+    const result = filterAndSortVersions(versions, { query: '', risk: 'UNKNOWN', status: 'ALL', sort: 'RISK' });
+
+    expect(result.map((version) => version.patchId)).toEqual([4]);
+  });
+
   it('sorts by risk, score, and latest snapshot time', () => {
-    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'RISK' }).map((version) => version.patchId)).toEqual([2, 3, 1]);
-    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'SCORE_ASC' }).map((version) => version.patchId)).toEqual([2, 3, 1]);
-    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'LATEST' }).map((version) => version.patchId)).toEqual([2, 3, 1]);
+    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'RISK' }).map((version) => version.patchId)).toEqual([2, 3, 1, 4]);
+    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'SCORE_ASC' }).map((version) => version.patchId)).toEqual([4, 2, 3, 1]);
+    expect(filterAndSortVersions(versions, { query: '', risk: 'ALL', status: 'ALL', sort: 'LATEST' }).map((version) => version.patchId)).toEqual([4, 2, 3, 1]);
   });
 });
 
 describe('summarizeRiskCounts', () => {
   it('counts versions by known risk levels', () => {
-    expect(summarizeRiskCounts(versions)).toEqual({ HIGH: 1, MEDIUM: 1, LOW: 1 });
+    expect(summarizeRiskCounts(versions)).toEqual({ HIGH: 1, MEDIUM: 1, LOW: 1, UNKNOWN: 1 });
   });
 });

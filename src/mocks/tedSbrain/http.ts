@@ -36,7 +36,7 @@ export function normalizeMockPath(pathname: string): string {
 function successResponse<T>(data: T, status = 200): Response {
   const body: TedSbrainResponse<T> = {
     result: true,
-    message: 'success',
+    message: '请求成功',
     data,
     criticalProcess: {},
   };
@@ -100,7 +100,7 @@ export async function handleTedSbrainMockRequest(request: Request): Promise<Resp
   const historyPatchId = method === 'GET' ? patchIdFromPath(pathname, '/history') : undefined;
   if (historyPatchId !== undefined) {
     if (!findPatchScore(historyPatchId)) {
-      return failureResponse('patch score not found');
+      return failureResponse('未找到版本评分');
     }
 
     return successResponse(getPatchScoreHistory(historyPatchId));
@@ -110,21 +110,21 @@ export async function handleTedSbrainMockRequest(request: Request): Promise<Resp
   if (getPatchId !== undefined) {
     const patchScore = findPatchScore(getPatchId);
 
-    return patchScore ? successResponse(patchScore) : failureResponse('patch score not found');
+    return patchScore ? successResponse(patchScore) : failureResponse('未找到版本评分');
   }
 
   const calculatePatchId = method === 'POST' ? patchIdFromPath(pathname, '/calculate') : undefined;
   if (calculatePatchId !== undefined) {
     const patchScore = findPatchScore(calculatePatchId);
 
-    return patchScore ? successResponse(patchScore) : failureResponse('patch score not found');
+    return patchScore ? successResponse(patchScore) : failureResponse('未找到版本评分');
   }
 
   if (method === 'GET' && pathname.startsWith('/scoreSnapshot/get/')) {
     const id = decodeURIComponent(pathname.slice('/scoreSnapshot/get/'.length));
     const snapshot = findScoreSnapshot(id);
 
-    return snapshot ? successResponse(snapshot) : failureResponse('score snapshot not found');
+    return snapshot ? successResponse(snapshot) : failureResponse('未找到评分快照');
   }
 
   if (method === 'GET' && pathname === '/scoreSnapshot/list') {
@@ -139,5 +139,5 @@ export async function handleTedSbrainMockRequest(request: Request): Promise<Resp
     return successResponse(pageScoreSnapshots(filtersFrom(url.searchParams), 200));
   }
 
-  return failureResponse(`mock route not found: ${method} ${pathname}`);
+  return failureResponse(`未找到mock路由：${method} ${pathname}`);
 }

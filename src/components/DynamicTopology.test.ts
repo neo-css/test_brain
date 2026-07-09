@@ -12,7 +12,7 @@ import {
 describe('DynamicTopology scanner speed continuity', () => {
   it('keeps scanner speed out of the render effect dependencies', () => {
     expect(source).not.toContain('}, [nav, scannerRisk, scannerSpeed]);');
-    expect(source).toContain('}, [nav, scannerRisk]);');
+    expect(source).toContain('}, [detailState, nav, scannerRisk]);');
   });
 });
 
@@ -21,6 +21,16 @@ describe('DynamicTopology visual topology rendering', () => {
     expect(source).toContain('const visualState = getTopologyColumnVisualState');
     expect(source).toContain('if (!visualState.isRaised)');
     expect(source).toContain('visualState.hasAlertCap');
+  });
+
+  it('lights unknown-risk columns when scanner risk is unknown', () => {
+    expect(getTopologyColumnScanState({
+      screenX: 50,
+      scanMinX: 0,
+      scanMaxX: 100,
+      scannerRisk: 'UNKNOWN',
+      riskLevel: 'UNKNOWN',
+    }).isLit).toBe(true);
   });
 });
 

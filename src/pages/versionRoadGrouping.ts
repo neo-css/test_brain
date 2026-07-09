@@ -1,4 +1,4 @@
-import { VersionDetail } from '../data/versionMock';
+import { RiskLevel, VersionDetail } from '../data/versionMock';
 
 export type DamageLevel = 0 | 1 | 2 | 3 | 4;
 
@@ -23,12 +23,11 @@ export function getDataAnchorDate(versions: VersionDetail[]): string {
   return dates[dates.length - 1];
 }
 
-export function assignDamageLevel(totalScore: number): DamageLevel {
-  if (totalScore >= 85) return 0;
-  if (totalScore >= 75) return 1;
-  if (totalScore >= 65) return 2;
-  if (totalScore >= 55) return 3;
-  return 4;
+export function assignDamageLevel(riskLevel: RiskLevel): DamageLevel {
+  if (riskLevel === 'LOW') return 0;
+  if (riskLevel === 'MEDIUM') return 2;
+  if (riskLevel === 'HIGH') return 4;
+  return 3;
 }
 
 export function damageLabel(level: DamageLevel): string {

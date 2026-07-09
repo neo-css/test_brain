@@ -53,6 +53,10 @@ function makeVersion(metrics: MetricItem[]): VersionDetail {
 }
 
 describe('buildMetricRadarPoints', () => {
+  function radiusOf(point: { x: number; y: number }, center: number): number {
+    return Math.hypot(point.x - center, point.y - center);
+  }
+
   it('returns one point per metric and scales scores against the metric max score', () => {
     const points = buildMetricRadarPoints([
       makeMetric({ metricCode: 'A', actualScore: 5 }),
@@ -66,6 +70,18 @@ describe('buildMetricRadarPoints', () => {
     expect(points.every((point) => point.x >= 30 && point.x <= 250)).toBe(true);
     expect(points.every((point) => point.y >= 30 && point.y <= 250)).toBe(true);
   });
+
+  it('scales mock service 100-point scores instead of clamping every metric to a full hexagon', () => {
+    const points = buildMetricRadarPoints([
+      makeMetric({ metricCode: 'A', actualScore: 100 }),
+      makeMetric({ metricCode: 'B', actualScore: 50 }),
+      makeMetric({ metricCode: 'C', actualScore: 20 }),
+    ], 140, 100);
+
+    expect(radiusOf(points[0], 140)).toBeCloseTo(100);
+    expect(radiusOf(points[1], 140)).toBeCloseTo(50);
+    expect(radiusOf(points[2], 140)).toBeCloseTo(20);
+  });
 });
 
 describe('MetricScoreCards', () => {
@@ -77,6 +93,8 @@ describe('MetricScoreCards', () => {
           makeMetric({ metricCode: 'DEFECT_RISK', metricName: '版本缺陷风险', actualScore: 3.2, riskLevel: 'MEDIUM' }),
           makeMetric({ metricCode: 'SMART_TEST', metricName: '智能测试渗透率', actualScore: 3, riskLevel: 'MEDIUM' }),
         ]),
+        selectedMetricCode: 'CHANGES_RISK',
+        onSelectMetric: () => undefined,
       }),
     );
 
@@ -84,10 +102,16 @@ describe('MetricScoreCards', () => {
     expect(html).toContain('metric-radar-outer-dot');
     expect(html).toContain('class="metric-radar-label-group metric-radar-label-animated"');
     expect(html).toContain('class="metric-radar-label-name"');
-    expect(html).toContain('class="metric-radar-label-score metric-radar-risk-medium"');
+    expect(html).not.toContain('metric-radar-label-score');
     expect(html).toContain('class="metric-radar-score metric-radar-score-animated"');
+    expect(html).not.toContain('metric-radar-hit-target-selected');
+    expect(html).toContain('role="button"');
+    expect(html).toContain('tabindex="0"');
+    expect(html).toContain('aria-label="查看版本变更风险证据"');
+    expect(html).toContain('aria-pressed="true"');
     expect(html).toContain('class="metric-radar-dot metric-radar-dot-animated metric-radar-risk-medium"');
-    expect(html).toContain('aria-label="版本变更风险，得分 4.4，准入阶段 / 版本质量"');
+    expect(html).toContain('aria-label="版本变更风险，准入阶段 / 版本质量"');
+    expect(html).not.toContain('>4.4</text>');
     expect(html).not.toContain('foreignObject');
   });
 });

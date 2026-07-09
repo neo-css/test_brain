@@ -104,7 +104,17 @@ const FEATURE_LABELS: Record<string, string> = {
   filterNum: '过滤数',
   coverState: '覆盖状态',
   description: '说明',
+  value: '特征值',
 };
+
+const HIDDEN_FEATURE_KEYS = new Set([
+  '数据来源',
+  '是否稳定样例',
+  'source',
+  'mock',
+  'mockSource',
+  'stableSample',
+]);
 
 function riskWeight(riskLevel?: RiskLevel) {
   const key = riskLevel ?? 'LOW';
@@ -178,6 +188,8 @@ function getGroups(version: VersionDetail, sourceGroups: MetricGroup[], groupKey
 }
 
 function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact[] {
+  if (HIDDEN_FEATURE_KEYS.has(key)) return [];
+
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     if (key === 'clickCounts') {
       return Object.entries(value).map(([clickName, clickValue]) => ({
@@ -186,24 +198,50 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
       }));
     }
 
-    return Object.entries(value).map(([childKey, childValue]) => ({
-      label: FEATURE_LABELS[childKey] ?? childKey,
-      value: formatFeatureValue(childKey, childValue),
-    }));
+    if ('value' in value) {
+      return [{
+        label: FEATURE_LABELS[key] ?? FEATURE_LABELS.value,
+        value: formatFeatureValue('value', (value as Record<string, MetricFeatureValue>).value),
+      }];
+    }
+
+    if (key in FEATURE_LABELS) {
+      return Object.entries(value)
+        .filter(([childKey]) => childKey in FEATURE_LABELS && !HIDDEN_FEATURE_KEYS.has(childKey))
+        .map(([childKey, childValue]) => ({
+          label: FEATURE_LABELS[childKey],
+          value: formatFeatureValue(childKey, childValue),
+        }));
+    }
+
+    return [];
   }
+
+  if (!(key in FEATURE_LABELS)) return [];
 
   return [
     {
-      label: FEATURE_LABELS[key] ?? key,
+      label: FEATURE_LABELS[key],
       value: formatFeatureValue(key, value),
     },
   ];
 }
 
-function buildFacts(metric: MetricItem): DetailFact[] {
-  if (!metric.features) return [];
+function optionalFact(label: string, value: unknown): DetailFact | undefined {
+  if (value === undefined || value === null || value === '') return undefined;
+  return { label, value: String(value) };
+}
 
-  return Object.entries(metric.features).flatMap(([key, value]) => flattenFeatureFacts(key, value));
+function buildFacts(metric: MetricItem): DetailFact[] {
+  const readableFacts = [
+    optionalFact('指标说明', metric.description),
+  ].filter((fact): fact is DetailFact => Boolean(fact));
+
+  const featureFacts = metric.features
+    ? Object.entries(metric.features).flatMap(([key, value]) => flattenFeatureFacts(key, value))
+    : [];
+
+  return [...readableFacts, ...featureFacts];
 }
 
 function buildFocusItems(metrics: MetricItem[]): FocusItem[] {
@@ -230,6 +268,20 @@ function parseDateTime(value: string) {
 function daysBetween(start: string, end: string) {
   const duration = parseDateTime(end) - parseDateTime(start);
   return Math.max(1, Math.ceil(duration / 86_400_000));
+}
+
+function clampPercent(value: number): number {
+  return Math.min(100, Math.max(0, Math.round(value)));
+}
+
+function formatCurrentTime(value: number): string {
+  const date = new Date(value);
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  const hour = String(date.getHours()).padStart(2, '0');
+  const minute = String(date.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day} ${hour}:${minute}`;
 }
 
 function buildRiskComposition(metrics: MetricItem[]): RiskCompositionItem[] {
@@ -269,7 +321,7 @@ function buildCoverageSeries(metrics: MetricItem[]): CoverageSeriesItem[] {
   ].filter((item): item is CoverageSeriesItem => Boolean(item));
 }
 
-function buildScheduleBars(version: VersionDetail): ScheduleBar[] {
+function getTimelineBounds(version: VersionDetail, currentTime = Date.now()) {
   const entries = [
     {
       label: '计划测试',
@@ -283,8 +335,14 @@ function buildScheduleBars(version: VersionDetail): ScheduleBar[] {
     },
   ];
   const minTime = Math.min(...entries.map((entry) => parseDateTime(entry.start)));
-  const maxTime = Math.max(...entries.map((entry) => parseDateTime(entry.end)), parseDateTime(version.snapshotsTs));
+  const maxTime = Math.max(...entries.map((entry) => parseDateTime(entry.end)), currentTime);
   const totalRange = Math.max(maxTime - minTime, 1);
+
+  return { entries, minTime, maxTime, totalRange, currentTime };
+}
+
+function buildScheduleBars(version: VersionDetail): ScheduleBar[] {
+  const { entries, minTime, totalRange } = getTimelineBounds(version);
 
   return entries.map((entry) => {
     const start = parseDateTime(entry.start);
@@ -295,21 +353,19 @@ function buildScheduleBars(version: VersionDetail): ScheduleBar[] {
       startLabel: formatDateTime(entry.start),
       endLabel: formatDateTime(entry.end),
       durationDays: daysBetween(entry.start, entry.end),
-      offsetPercent: Math.round(((start - minTime) / totalRange) * 100),
-      widthPercent: Math.max(8, Math.round(((end - start) / totalRange) * 100)),
+      offsetPercent: clampPercent(((start - minTime) / totalRange) * 100),
+      widthPercent: clampPercent(((end - start) / totalRange) * 100),
     };
   });
 }
 
 function buildSnapshotMarker(version: VersionDetail): SnapshotMarker {
-  const minTime = Math.min(parseDateTime(version.planedTestFromTime), parseDateTime(version.actualTestFromTime));
-  const maxTime = Math.max(parseDateTime(version.planedTestToTime), parseDateTime(version.actualTestToTime), parseDateTime(version.snapshotsTs));
-  const totalRange = Math.max(maxTime - minTime, 1);
+  const { minTime, totalRange, currentTime } = getTimelineBounds(version);
 
   return {
-    label: '快照',
-    timeLabel: formatDateTime(version.snapshotsTs),
-    offsetPercent: Math.min(100, Math.max(0, Math.round(((parseDateTime(version.snapshotsTs) - minTime) / totalRange) * 100))),
+    label: '当前时间',
+    timeLabel: formatCurrentTime(currentTime),
+    offsetPercent: clampPercent(((currentTime - minTime) / totalRange) * 100),
   };
 }
 

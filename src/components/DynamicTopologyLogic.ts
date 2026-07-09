@@ -1,4 +1,4 @@
-export type ScannerRisk = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
+export type ScannerRisk = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
 
 function clamp(value: number, min: number, max: number) {
   return Math.min(max, Math.max(min, value));

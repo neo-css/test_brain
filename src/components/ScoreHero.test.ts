@@ -52,5 +52,15 @@ describe('ScoreHero', () => {
     expect(html).toContain('高风险');
     expect(html).toContain('质量 3.93');
     expect(html).toContain('行为 3.18');
+    expect(html).toContain('class="score-strip-owners"');
+    expect(html).toContain('版本负责人');
+    expect(html).toContain('张三');
+    expect(html).toContain('测试负责人');
+    expect(html).toContain('李四');
+    expect(html).toContain('开发负责人');
+    expect(html).toContain('王五');
+    expect(html).not.toContain('zhangsan');
+    expect(html).not.toContain('lisi');
+    expect(html).not.toContain('wangwu');
   });
 });

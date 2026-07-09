@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import VersionOverviewPanel from '../components/VersionOverviewPanel';
 import VersionRowCard from '../components/VersionRowCard';
-import { versionDetails } from '../data/versionMock';
+import { useCollectionVersions } from '../services/tedSbrain/useTedSbrainVersions';
 import {
   filterAndSortVersions,
   getStatusOptions,
@@ -16,24 +16,48 @@ function VersionListPage() {
   const [status, setStatus] = useState('ALL');
   const [sort, setSort] = useState<VersionSort>('RISK');
 
-  const statusOptions = useMemo(() => getStatusOptions(versionDetails), []);
+  const { status: loadStatus, versions, error } = useCollectionVersions();
+  const statusOptions = useMemo(() => getStatusOptions(versions), [versions]);
   const filteredVersions = useMemo(
-    () => filterAndSortVersions(versionDetails, { query, risk, status, sort }),
-    [query, risk, status, sort],
+    () => filterAndSortVersions(versions, { query, risk, status, sort }),
+    [versions, query, risk, status, sort],
   );
   const filteredRiskCounts = useMemo(() => summarizeRiskCounts(filteredVersions), [filteredVersions]);
+
+  if (loadStatus === 'loading') {
+    return (
+      <main className="page-shell list-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载中</h1>
+          <p>正在从 ted-sbrain 服务获取最新评分数据。</p>
+        </section>
+      </main>
+    );
+  }
+
+  if (loadStatus === 'error') {
+    return (
+      <main className="page-shell list-page">
+        <section className="list-empty" aria-live="polite">
+          <h1>版本数据加载失败</h1>
+          <p>{error}</p>
+        </section>
+      </main>
+    );
+  }
 
   return (
     <main className="page-shell list-page">
       <VersionOverviewPanel
         title="版本列表"
-        subtitle="统一查看版本列表与版本态势，风险数量会随搜索、状态与排序条件同步更新。"
+        subtitle="统一查看版本列表与版本轨迹，风险数量会随搜索、状态与排序条件同步更新。"
         summaryItems={[
-          { label: '当前在测', value: versionDetails.length },
+          { label: '当前在测', value: versions.length },
           { label: '筛选结果', value: filteredVersions.length },
           { label: '高风险', value: filteredRiskCounts.HIGH },
           { label: '中风险', value: filteredRiskCounts.MEDIUM },
           { label: '低风险', value: filteredRiskCounts.LOW },
+          { label: '未知风险', value: filteredRiskCounts.UNKNOWN },
         ]}
         query={query}
         risk={risk}
@@ -45,7 +69,7 @@ function VersionListPage() {
         onStatusChange={setStatus}
         onSortChange={setSort}
         showBackLink
-        backLabel="返回 L1"
+        backLabel="返回首页"
       />
 
       {filteredVersions.length > 0 ? (

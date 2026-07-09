@@ -8,6 +8,7 @@ function App() {
   return (
     <Routes>
       <Route path="/" element={<L1DashboardPage />} />
+      <Route path="/versions/overview" element={<L1DashboardPage mode="version-overview" />} />
       <Route path="/versions" element={<VersionListPage />} />
       <Route path="/versions/road" element={<VersionRoadPage />} />
       <Route path="/versions/:patchId" element={<VersionDetailPage />} />

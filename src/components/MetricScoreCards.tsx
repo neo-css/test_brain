@@ -4,17 +4,21 @@ import { polarPoint, pointsToString, type RadarPoint } from './radarUtils';
 
 interface MetricScoreCardsProps {
   version: VersionDetail;
+  selectedMetricCode?: string;
+  onSelectMetric?: (metricCode: string) => void;
 }
 
-const MAX_SCORE = 5;
+const LEGACY_MAX_SCORE = 5;
+const SERVICE_MAX_SCORE = 100;
 const VIEW_SIZE = 440;
 const CENTER = VIEW_SIZE / 2;
 const MAX_RADIUS = 120;
-const OUTER_RADIUS = 190;
+const OUTER_RADIUS = 172;
 
 function riskClass(level?: string): string {
   if (level === 'HIGH') return 'metric-radar-risk-high';
   if (level === 'MEDIUM') return 'metric-radar-risk-medium';
+  if (level === 'UNKNOWN') return 'metric-radar-risk-unknown';
   return 'metric-radar-risk-low';
 }
 
@@ -51,29 +55,41 @@ function wrapText(text: string, maxChars: number): string[] {
 }
 
 export function buildMetricRadarPoints(metrics: MetricItem[], center: number, maxRadius: number): RadarPoint[] {
+  const maxScore = getMetricMaxScore(metrics);
   return metrics.map((metric, index) => {
-    const ratio = Math.min(Math.max(metric.actualScore / MAX_SCORE, 0), 1);
+    const ratio = normalizeMetricScore(metric.actualScore, maxScore);
     const radius = Math.max(12, ratio * maxRadius);
     return polarPoint(index, metrics.length, radius, center);
   });
 }
 
-function MetricScoreCards({ version }: MetricScoreCardsProps) {
+function getMetricMaxScore(metrics: MetricItem[]): number {
+  return metrics.some((metric) => metric.actualScore > LEGACY_MAX_SCORE || metric.calcScore > LEGACY_MAX_SCORE)
+    ? SERVICE_MAX_SCORE
+    : LEGACY_MAX_SCORE;
+}
+
+function normalizeMetricScore(score: number, maxScore: number): number {
+  return Math.min(Math.max(score / maxScore, 0), 1);
+}
+
+function MetricScoreCards({ version, selectedMetricCode, onSelectMetric }: MetricScoreCardsProps) {
   const metrics = version.metrics;
   const total = metrics.length;
   const center = CENTER;
   const maxRadius = MAX_RADIUS;
   const rings = [0.2, 0.4, 0.6, 0.8, 1];
+  const maxScore = getMetricMaxScore(metrics);
   const axisPoints = metrics.map((_, index) => polarPoint(index, total, maxRadius, center));
   const outerPoints = metrics.map((_, index) => polarPoint(index, total, OUTER_RADIUS, center));
   const scorePoints = useMemo(
     () =>
       metrics.map((metric, index) => {
-        const ratio = Math.min(Math.max(metric.actualScore / MAX_SCORE, 0), 1);
+        const ratio = normalizeMetricScore(metric.actualScore, maxScore);
         const radius = Math.max(12, ratio * maxRadius);
         return polarPoint(index, total, radius, center);
       }),
-    [metrics, maxRadius, center, total],
+    [metrics, maxRadius, center, total, maxScore],
   );
 
   const labelPoints = metrics.map((_, index) =>
@@ -113,6 +129,30 @@ function MetricScoreCards({ version }: MetricScoreCardsProps) {
         <polygon points={pointsToString(scorePoints)} className="metric-radar-score metric-radar-score-animated" />
         {scorePoints.map((point, index) => {
           const metric = metrics[index];
+          const selectMetric = () => onSelectMetric?.(metric.metricCode);
+          return (
+            <circle
+              key={`${metric.metricCode}-hit-target`}
+              cx={point.x}
+              cy={point.y}
+              r="18"
+              className="metric-radar-hit-target"
+              role="button"
+              tabIndex={0}
+              aria-label={`查看${metric.metricName}证据`}
+              aria-pressed={metric.metricCode === selectedMetricCode}
+              onClick={selectMetric}
+              onKeyDown={(event) => {
+                if (event.key === 'Enter' || event.key === ' ') {
+                  event.preventDefault();
+                  selectMetric();
+                }
+              }}
+            />
+          );
+        })}
+        {scorePoints.map((point, index) => {
+          const metric = metrics[index];
           return (
             <circle
               key={metric.metricCode}
@@ -127,7 +167,7 @@ function MetricScoreCards({ version }: MetricScoreCardsProps) {
           const anchor = textAnchor(index, total);
           const dy = dyOffset(index, total);
           const meta = `${metric.phaseName ?? '未知阶段'} / ${metric.evalTargetName ?? '未知目标'}`;
-          const ariaLabel = `${metric.metricName}，得分 ${metric.actualScore.toFixed(1)}，${meta}`;
+          const ariaLabel = `${metric.metricName}，${meta}`;
           const nameLines = wrapText(metric.metricName, 7);
           return (
             <g
@@ -148,14 +188,6 @@ function MetricScoreCards({ version }: MetricScoreCardsProps) {
                   {line}
                 </text>
               ))}
-              <text
-                x={point.x}
-                y={point.y + dy + nameLines.length * 14}
-                textAnchor={anchor}
-                className={`metric-radar-label-score ${riskClass(metric.riskLevel)}`}
-              >
-                {metric.actualScore.toFixed(1)}
-              </text>
             </g>
           );
         })}

@@ -1,6 +1,6 @@
 import { RISK_WEIGHT, VersionDetail } from '../data/versionMock';
 
-export type RiskFilter = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW';
+export type RiskFilter = 'ALL' | 'HIGH' | 'MEDIUM' | 'LOW' | 'UNKNOWN';
 export type StatusFilter = 'ALL' | string;
 export type VersionSort = 'RISK' | 'SCORE_ASC' | 'SCORE_DESC' | 'LATEST';
 
@@ -55,12 +55,17 @@ export function filterAndSortVersions(versions: VersionDetail[], filters: Versio
 export function summarizeRiskCounts(versions: VersionDetail[]) {
   return versions.reduce(
     (counts, version) => {
-      if (version.riskLevel === 'HIGH' || version.riskLevel === 'MEDIUM' || version.riskLevel === 'LOW') {
+      if (
+        version.riskLevel === 'HIGH' ||
+        version.riskLevel === 'MEDIUM' ||
+        version.riskLevel === 'LOW' ||
+        version.riskLevel === 'UNKNOWN'
+      ) {
         counts[version.riskLevel] += 1;
       }
       return counts;
     },
-    { HIGH: 0, MEDIUM: 0, LOW: 0 },
+    { HIGH: 0, MEDIUM: 0, LOW: 0, UNKNOWN: 0 },
   );
 }
 

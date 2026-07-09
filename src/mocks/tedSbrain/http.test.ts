@@ -22,7 +22,7 @@ describe('ted-sbrain mock HTTP routing', () => {
     const body = await readJson(response);
 
     expect(response.status).toBe(200);
-    expect(body).toMatchObject({ result: true, data: { status: 'ok' } });
+    expect(body).toMatchObject({ result: true, message: '请求成功', data: { status: 'ok' } });
   });
 
   it('returns the LOW patch score for GET score requests', async () => {
@@ -77,7 +77,9 @@ describe('ted-sbrain mock HTTP routing', () => {
     const body = await readJson<{ data: Array<{ id: string; riskLevel: string }> }>(response);
 
     expect(response.status).toBe(200);
-    expect(body.data).toEqual([expect.objectContaining({ id: 'snapshot-22345-latest', riskLevel: 'HIGH' })]);
+    expect(body.data).toHaveLength(3);
+    expect(body.data.every((record) => record.riskLevel === 'HIGH')).toBe(true);
+    expect(body.data).toContainEqual(expect.objectContaining({ id: 'snapshot-22345-latest', riskLevel: 'HIGH' }));
   });
 
   it('paginates score snapshots from query parameters', async () => {
@@ -89,8 +91,8 @@ describe('ted-sbrain mock HTTP routing', () => {
     expect(response.status).toBe(200);
     expect(body.data.current).toBe(2);
     expect(body.data.size).toBe(2);
-    expect(body.data.total).toBe(4);
-    expect(body.data.pages).toBe(2);
+    expect(body.data.total).toBe(10);
+    expect(body.data.pages).toBe(5);
     expect(body.data.records.map((record) => record.id)).toEqual(['snapshot-32345-latest', 'snapshot-42345-latest']);
   });
 
@@ -101,8 +103,8 @@ describe('ted-sbrain mock HTTP routing', () => {
     expect(response.status).toBe(200);
     expect(body.data.current).toBe(1);
     expect(body.data.size).toBe(200);
-    expect(body.data.total).toBe(4);
-    expect(body.data.records).toHaveLength(4);
+    expect(body.data.total).toBe(10);
+    expect(body.data.records).toHaveLength(10);
   });
 
   it('returns a 404 failure wrapper for missing patches', async () => {
@@ -112,7 +114,7 @@ describe('ted-sbrain mock HTTP routing', () => {
     expect(response.status).toBe(404);
     expect(body).toEqual({
       result: false,
-      message: 'patch score not found',
+      message: '未找到版本评分',
       data: null,
       criticalProcess: {},
     });

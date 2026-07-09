@@ -1,7 +1,7 @@
 import { ReactNode } from 'react';
 
 interface InfoPanelProps {
-  title: string;
+  title?: string;
   kicker?: string;
   children: ReactNode;
   className?: string;
@@ -12,7 +12,7 @@ function InfoPanel({ title, kicker, children, className = '' }: InfoPanelProps) 
     <section className={`info-panel ${className}`}>
       <div className="panel-heading">
         {kicker ? <span>{kicker}</span> : null}
-        <h2>{title}</h2>
+        {title ? <h2>{title}</h2> : null}
       </div>
       {children}
     </section>

@@ -14,6 +14,11 @@ function ScoreHero({ version }: ScoreHeroProps) {
         <span>质量 {version.qualityScore.toFixed(2)}</span>
         <span>行为 {version.behaviorScore.toFixed(2)}</span>
       </div>
+      <div className="score-strip-owners" aria-label="版本负责人信息">
+        <span>版本负责人 <strong>{version.patchOwner}</strong></span>
+        <span>测试负责人 <strong>{version.testLeader}</strong></span>
+        <span>开发负责人 <strong>{version.devLeader}</strong></span>
+      </div>
     </section>
   );
 }

@@ -31,7 +31,10 @@ Override the port when needed:
 MOCK_PORT=49153 npm run mock
 ```
 
-## Frontend targets
+## Frontend data source switching
+
+The frontend loads version collection and detail data through `src/services/tedSbrain/api.ts`.
+Runtime page code does not import mock fixtures directly.
 
 Use the direct browser mock when CORS-friendly local calls are acceptable:
 

@@ -9,6 +9,7 @@ export interface L1DashboardSummary {
     HIGH: number;
     MEDIUM: number;
     LOW: number;
+    UNKNOWN: number;
   };
   highRiskRatio: number;
   priorityVersions: VersionDetail[];

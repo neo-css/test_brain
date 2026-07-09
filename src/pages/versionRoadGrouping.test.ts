@@ -48,16 +48,11 @@ function makeVersion(overrides: Partial<VersionDetail>): VersionDetail {
 }
 
 describe('assignDamageLevel', () => {
-  it('maps totalScore to damage levels by thresholds', () => {
-    expect(assignDamageLevel(95)).toBe(0);
-    expect(assignDamageLevel(85)).toBe(0);
-    expect(assignDamageLevel(84.9)).toBe(1);
-    expect(assignDamageLevel(75)).toBe(1);
-    expect(assignDamageLevel(74.9)).toBe(2);
-    expect(assignDamageLevel(65)).toBe(2);
-    expect(assignDamageLevel(60)).toBe(3);
-    expect(assignDamageLevel(54.9)).toBe(4);
-    expect(assignDamageLevel(0)).toBe(4);
+  it('maps risk levels from mock data to car damage levels', () => {
+    expect(assignDamageLevel('LOW')).toBe(0);
+    expect(assignDamageLevel('MEDIUM')).toBe(2);
+    expect(assignDamageLevel('HIGH')).toBe(4);
+    expect(assignDamageLevel('UNKNOWN')).toBe(3);
   });
 });
 

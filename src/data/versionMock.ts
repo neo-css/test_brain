@@ -1,9 +1,10 @@
-export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH';
+export type RiskLevel = 'LOW' | 'MEDIUM' | 'HIGH' | 'UNKNOWN';
 
 export const RISK_WEIGHT: Record<RiskLevel, number> = {
   HIGH: 3,
   MEDIUM: 2,
   LOW: 1,
+  UNKNOWN: 0,
 };
 
 export type MetricFeatureValue =
