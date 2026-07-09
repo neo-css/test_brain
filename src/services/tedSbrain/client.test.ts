@@ -16,8 +16,8 @@ import {
 } from './client';
 
 describe('ted-sbrain API client', () => {
-  it('uses the local mock base URL when no env value is provided', () => {
-    expect(getTedSbrainApiBaseUrl({})).toBe('http://localhost:49152');
+  it('uses the configured backend base URL when no env value is provided', () => {
+    expect(getTedSbrainApiBaseUrl({})).toBe('http://172.21.126.221:49152');
   });
 
   it('uses VITE_TED_SBRAIN_API_BASE_URL when provided', () => {
