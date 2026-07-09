@@ -1,0 +1,54 @@
+name: Build dist
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    name: Build dist
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Build project
+        run: npm run build
+
+      - name: Package dist
+        run: tar -czf "dist-${{ github.ref_name }}.tar.gz" dist
+
+      - name: Upload dist artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: dist-${{ github.ref_name }}
+          path: dist-${{ github.ref_name }}.tar.gz
+          if-no-files-found: error
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+          TAG_NAME: ${{ github.ref_name }}
+          RELEASE_ASSET: dist-${{ github.ref_name }}.tar.gz
+        run: |
+          if gh release view "$TAG_NAME" >/dev/null 2>&1; then
+            gh release upload "$TAG_NAME" "$RELEASE_ASSET" --clobber
+          else
+            gh release create "$TAG_NAME" "$RELEASE_ASSET" \
+              --title "$TAG_NAME" \
+              --notes "Automated release for $TAG_NAME."
+          fi
