@@ -201,17 +201,58 @@ describe('buildVersionDetailInsights', () => {
 
     expect(insights.evidenceRows.find((row) => row.metricCode === 'CHANGES_RISK')?.facts).toEqual(
       expect.arrayContaining([
-        { label: '需求摘要一致', value: '是' },
-        { label: '代码摘要一致', value: '否' },
-        { label: '代码差异数', value: '2' },
+        expect.objectContaining({ label: '需求摘要一致', value: '是' }),
+        expect.objectContaining({ label: '代码摘要一致', value: '否' }),
+        expect.objectContaining({ label: '代码差异数', value: '2' }),
       ]),
     );
     expect(insights.evidenceRows.find((row) => row.metricCode === 'SMART_TEST')?.facts).toEqual(
       expect.arrayContaining([
-        { label: '案例生成点击', value: '1 次' },
-        { label: '缺陷分析点击', value: '2 次' },
+        expect.objectContaining({ label: '案例生成点击', value: '1 次' }),
+        expect.objectContaining({ label: '缺陷分析点击', value: '2 次' }),
       ]),
     );
+  });
+
+  it('keeps nested coverage facts readable and uniquely keyed', () => {
+    const insights = buildVersionDetailInsights(makeVersion({
+      metrics: [
+        {
+          metricCode: 'COVERAGE_FUNCTION',
+          metricName: '变更函数测试覆盖率',
+          phase: 'RELEASE',
+          phaseName: '发布阶段',
+          dataDimension: 'COVERAGE_RELATED',
+          dataDimensionName: '覆盖率相关',
+          evalTarget: 'VERSION_QUALITY',
+          evalTargetName: '版本质量',
+          calcScore: 3,
+          actualScore: 3,
+          riskLevel: 'MEDIUM',
+          features: {
+            javaCoverageInfo: {
+              filterNum: 8,
+              cover: 156,
+            },
+            cCoverageInfo: {
+              filterNum: 3,
+              cover: 42,
+            },
+          },
+        },
+      ],
+    }));
+
+    const coverageFacts = insights.evidenceRows[0].facts;
+    const factKeys = coverageFacts.map((fact) => (fact as { key?: string }).key);
+
+    expect(coverageFacts).toEqual(
+      expect.arrayContaining([
+        { key: 'javaCoverageInfo.filterNum', label: 'Java 覆盖 / 过滤数', value: '8' },
+        { key: 'cCoverageInfo.filterNum', label: 'C 覆盖 / 过滤数', value: '3' },
+      ]),
+    );
+    expect(new Set(factKeys).size).toBe(factKeys.length);
   });
 
   it('does not expose raw API codes, mock provenance, URLs, accounts, or unknown JSON keys in evidence facts', () => {

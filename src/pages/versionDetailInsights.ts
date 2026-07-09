@@ -1,6 +1,7 @@
 import { formatDateTime, RISK_WEIGHT, type MetricFeatureValue, type MetricGroup, type MetricItem, type RiskLevel, type VersionDetail } from '../data/versionMock';
 
 export interface DetailFact {
+  key: string;
   label: string;
   value: string;
 }
@@ -193,6 +194,7 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
   if (value && typeof value === 'object' && !Array.isArray(value)) {
     if (key === 'clickCounts') {
       return Object.entries(value).map(([clickName, clickValue]) => ({
+        key: `${key}.${clickName}`,
         label: `${clickName}点击`,
         value: `${asDisplayValue(clickValue)} 次`,
       }));
@@ -200,6 +202,7 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
 
     if ('value' in value) {
       return [{
+        key,
         label: FEATURE_LABELS[key] ?? FEATURE_LABELS.value,
         value: formatFeatureValue('value', (value as Record<string, MetricFeatureValue>).value),
       }];
@@ -209,7 +212,8 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
       return Object.entries(value)
         .filter(([childKey]) => childKey in FEATURE_LABELS && !HIDDEN_FEATURE_KEYS.has(childKey))
         .map(([childKey, childValue]) => ({
-          label: FEATURE_LABELS[childKey],
+          key: `${key}.${childKey}`,
+          label: `${FEATURE_LABELS[key]} / ${FEATURE_LABELS[childKey]}`,
           value: formatFeatureValue(childKey, childValue),
         }));
     }
@@ -221,6 +225,7 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
 
   return [
     {
+      key,
       label: FEATURE_LABELS[key],
       value: formatFeatureValue(key, value),
     },
@@ -229,7 +234,7 @@ function flattenFeatureFacts(key: string, value: MetricFeatureValue): DetailFact
 
 function optionalFact(label: string, value: unknown): DetailFact | undefined {
   if (value === undefined || value === null || value === '') return undefined;
-  return { label, value: String(value) };
+  return { key: label, label, value: String(value) };
 }
 
 function buildFacts(metric: MetricItem): DetailFact[] {

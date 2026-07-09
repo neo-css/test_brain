@@ -1,0 +1,40 @@
+<h2>版本页面信息架构调整</h2>
+<p class="subtitle">目标：不重做飞机和蛇形道样式，只把层级、命名和证据交互收顺。</p>
+
+<div class="options">
+  <div class="option" data-choice="recommended" onclick="toggleSelect(this)">
+    <div class="letter">A</div>
+    <div class="content">
+      <h3>推荐：现有首页临时代管 + 版本列表三视图</h3>
+      <p><strong>/</strong> 仍展示当前态势感知，后续可替换为真正首页；<strong>/versions/overview</strong> 也展示同一态势感知；<strong>/versions</strong> 是列表；<strong>/versions/road</strong> 改名为发布轨迹/测试轨迹。</p>
+      <div class="mockup">
+        <div class="mockup-header">结构预览</div>
+        <div class="mockup-body">
+          <div class="mock-nav">首页(临时态势感知) → 版本列表</div>
+          <div style="display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:10px;margin-top:12px">
+            <div class="placeholder">态势感知<br>飞机页</div>
+            <div class="placeholder">版本列表<br>表/卡片</div>
+            <div class="placeholder">发布轨迹<br>蛇形道</div>
+          </div>
+          <div class="placeholder" style="margin-top:12px">版本详情：点击六边形维度 → 右侧/浮层展示 EVIDENCE 明细</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="option" data-choice="tabs-first" onclick="toggleSelect(this)">
+    <div class="letter">B</div>
+    <div class="content">
+      <h3>集中入口：/versions 默认就是态势感知</h3>
+      <p>/versions 变成三视图容器，默认打开飞机页；版本列表变为 /versions/list。优点是“版本列表”成为清晰模块，缺点是现有 /versions 语义和返回链接改动更多。</p>
+    </div>
+  </div>
+
+  <div class="option" data-choice="home-redirect" onclick="toggleSelect(this)">
+    <div class="letter">C</div>
+    <div class="content">
+      <h3>首页跳转：/ 直接重定向到版本模块</h3>
+      <p>最干净，但不符合你刚确认的“首页以当前 L1 暂代”，而且后续做真正首页时还要再拆。</p>
+    </div>
+  </div>
+</div>

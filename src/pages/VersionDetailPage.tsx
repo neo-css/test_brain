@@ -142,7 +142,7 @@ function VersionDetailPage() {
               </div>
               <div className="metric-evidence-facts">
                 {selectedEvidence.facts.map((fact) => (
-                  <span key={`${selectedEvidence.metricCode}-${fact.label}`}>
+                  <span key={`${selectedEvidence.metricCode}-${fact.key}`}>
                     <em>{fact.label}</em>
                     <strong>{fact.value}</strong>
                   </span>

@@ -1,0 +1,97 @@
+<h2>Mock 接口数据接入：字段差异与页面落点</h2>
+<p class="subtitle">当前 OpenSpec 设计偏“保持页面不变 + 适配数据”。如果目标是尽可能展示所有接口字段，页面需要补充承载区。</p>
+
+<div class="section">
+  <h3>数据流现状</h3>
+  <div class="mockup">
+    <div class="mockup-header">当前设计的数据流</div>
+    <div class="mockup-body">
+      <div style="display:grid;grid-template-columns:1fr auto 1fr auto 1fr;gap:12px;align-items:center">
+        <div class="placeholder">ted-sbrain mock/real API<br><strong>ScoreSnapshot / PatchScoreVO</strong></div>
+        <div style="font-size:24px">→</div>
+        <div class="placeholder">Adapter<br><strong>转成 VersionDetail</strong></div>
+        <div style="font-size:24px">→</div>
+        <div class="placeholder">现有页面<br><strong>列表 / L1 / 路书 / 详情</strong></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="split">
+  <div class="mockup">
+    <div class="mockup-header">当前页面已经展示较充分的字段</div>
+    <div class="mockup-body">
+      <ul>
+        <li>评分：totalScore、qualityScore、behaviorScore、riskLevel</li>
+        <li>版本：patchId、summary、status、releaseType、snapshotsTs</li>
+        <li>系统：sysId、systemName、systemLevel、teamName</li>
+        <li>人员：patchOwner、testLeader、devLeader</li>
+        <li>指标：metrics、byPhase、byDataDimension、byEvalTarget</li>
+        <li>计划测试时间：planedTestFromTime、planedTestToTime</li>
+      </ul>
+    </div>
+  </div>
+  <div class="mockup">
+    <div class="mockup-header">接口有但页面缺少明确展示位置的字段</div>
+    <div class="mockup-body">
+      <ul>
+        <li>快照：id、createTs、updateTs、creator、creatorId、updater、updaterId</li>
+        <li>发布排期：planedIssueTime、planedOnlineTime</li>
+        <li>版本描述：description</li>
+        <li>Owner 细节：patchOwnerId、testOwner、testOwnerUserId、testOwnerGroup</li>
+        <li>接口包装：message、criticalProcess</li>
+        <li>风险枚举：UNKNOWN 当前 UI 类型/统计/筛选不完整</li>
+        <li>历史接口：score/history 尚无趋势图或历史区块</li>
+        <li>calculate 接口：尚无“重新计算/刷新评分”入口</li>
+      </ul>
+    </div>
+  </div>
+</div>
+
+<div class="section">
+  <h3>建议新增/调整页面区块</h3>
+  <div class="cards">
+    <div class="card" data-choice="detail-rich" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="mockup">
+          <div class="mockup-header">详情页新增：接口全量信息</div>
+          <div class="mockup-body">
+            <div class="placeholder">版本描述 + 人员责任链 + 发布时间轴 + 快照审计</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>A. 详情页承载全量字段</h3>
+        <p>列表保持摘要，详情页展示所有 PatchScoreVO 业务字段，并补历史趋势和重算入口。</p>
+      </div>
+    </div>
+    <div class="card" data-choice="list-plus-detail" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="mockup">
+          <div class="mockup-header">列表增强 + 详情全量</div>
+          <div class="mockup-body">
+            <div class="placeholder">列表展示关键接口字段，详情展示全量字段</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>B. 列表也展示更多字段</h3>
+        <p>列表卡片显示上线/发版时间、Owner、快照 ID；详情页展示完整字段。信息密度更高。</p>
+      </div>
+    </div>
+    <div class="card" data-choice="raw-debug" onclick="toggleSelect(this)">
+      <div class="card-image">
+        <div class="mockup">
+          <div class="mockup-header">增加接口原始数据面板</div>
+          <div class="mockup-body">
+            <div class="placeholder">折叠 JSON/键值表，用于确保字段零丢失</div>
+          </div>
+        </div>
+      </div>
+      <div class="card-body">
+        <h3>C. 加原始字段审计面板</h3>
+        <p>最稳地满足“所有接口数据都能看到”，但需要控制视觉噪音，适合折叠或详情页底部。</p>
+      </div>
+    </div>
+  </div>
+</div>
