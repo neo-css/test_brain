@@ -46,6 +46,13 @@ The detail page remains:
 
 The version view switch should become a three-option switch: `态势感知`, `版本列表`, `版本轨迹`. The existing icon/button vocabulary should be reused. Existing links that say `返回 L1` should say `返回首页`.
 
+Detail-entry return behavior must preserve where the user came from:
+
+- Entering a version detail from `/` should provide a return target of `/` with the user-facing label `返回首页`.
+- Entering a version detail from `/versions/overview` should provide a return target of `/versions/overview` with the user-facing label `返回态势感知`.
+- Entering a version detail from `/versions` should return to `/versions` with the user-facing label `返回版本列表`.
+- Entering a version detail from `/versions/road` should return to `/versions/road` with the user-facing label `返回版本轨迹`.
+
 ## Situation-Awareness Risk Filter
 
 The current detector-dispatch button group should be replaced with a standard select control. It should filter the topology by risk level using the same state currently used by the buttons.
@@ -60,6 +67,8 @@ Options:
 
 The language should stop implying command dispatch. The control label should communicate filtering, such as `风险筛选`.
 
+`UNKNOWN` must be supported end to end, not only as an option label. The implementation should update the relevant risk filter types, topology scanner risk type, risk labels, filtering logic, legend/copy, and tests so the unknown-risk path behaves consistently across the topology and shared version filters.
+
 ## Version Detail Evidence Interaction
 
 The metric hexagon/radar chart should become the primary evidence entry point.
@@ -67,12 +76,13 @@ The metric hexagon/radar chart should become the primary evidence entry point.
 Expected behavior:
 
 - Each metric dimension in the chart is clickable and keyboard accessible.
-- Clicking a metric selects it and reveals that metric's evidence details near the radar chart.
+- Clicking a metric selects it and updates a fixed metric evidence panel inside the radar `InfoPanel`.
 - Enter and Space activate the focused metric.
 - A selected state is visible but should use the existing visual vocabulary.
 - The details reuse the existing EVIDENCE content: metric name, phase/dimension/target metadata, actual score, calculated score, and fact values.
 - The default selected metric should be the first highest-risk metric, falling back to the first metric.
-- The bottom EVIDENCE list should no longer be the primary display. It can be removed or replaced by the metric-specific evidence panel, as long as the evidence remains accessible.
+- The bottom EVIDENCE list should be removed or replaced by the metric-specific panel. The evidence remains visible through the selected metric panel without requiring a modal.
+- The evidence panel should not be a floating modal or popover. It should stay in the existing detail layout, preferably within the radar panel area, so the page remains stable and accessible.
 
 ## Naming And Copy Design
 
@@ -102,7 +112,9 @@ Implementation should include focused tests for:
 
 - The three-option version view switch.
 - The risk dropdown including `未知风险`.
+- End-to-end `UNKNOWN` support in risk labels, filters, and topology scanner state.
 - Route availability for `/`, `/versions/overview`, `/versions`, `/versions/road`, and `/versions/:patchId`.
+- Correct detail return labels and targets from `/`, `/versions/overview`, `/versions`, and `/versions/road`.
 - Version detail metric evidence selection and keyboard activation.
 - User-facing copy changes from `返回 L1` to `返回首页`.
 
