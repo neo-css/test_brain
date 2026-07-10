@@ -5,9 +5,12 @@ export interface TedSbrainEnv {
   VITE_TED_SBRAIN_API_BASE_URL?: string;
 }
 
+const viteTedSbrainEnv: TedSbrainEnv = {
+  VITE_TED_SBRAIN_API_BASE_URL: import.meta.env.VITE_TED_SBRAIN_API_BASE_URL,
+};
+
 export function readViteEnv(): TedSbrainEnv {
-  const meta = import.meta as ImportMeta & { env?: TedSbrainEnv };
-  return meta.env ?? {};
+  return viteTedSbrainEnv;
 }
 
 export function trimTrailingSlash(value: string): string {

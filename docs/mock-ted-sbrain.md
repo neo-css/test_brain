@@ -48,11 +48,37 @@ Use same-origin proxy mode when browser requests should stay on `/ted-sbrain/...
 VITE_TED_SBRAIN_API_BASE_URL= VITE_TED_SBRAIN_PROXY_TARGET=http://localhost:49152 npm run dev
 ```
 
-Use the real backend by changing only the base URL:
+Use the real backend by changing only the base URL when the backend itself is CORS-friendly:
 
 ```bash
 VITE_TED_SBRAIN_API_BASE_URL=http://172.21.126.221:49152 npm run dev
 ```
+
+When the frontend is deployed behind Nginx, prefer same-origin requests and let Nginx proxy `/ted-sbrain/...` to the real backend. Build with an empty API base URL so the browser keeps calling the current origin:
+
+```bash
+VITE_TED_SBRAIN_API_BASE_URL= npm run build
+```
+
+Example Nginx location blocks:
+
+```nginx
+location / {
+    root /srv/test_brain/dist;
+    try_files $uri $uri/ /index.html;
+}
+
+location /ted-sbrain/ {
+    proxy_pass http://172.21.126.221:49152;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+With that setup the browser requests `http://<your-frontend-host>/ted-sbrain/...`, so no browser CORS negotiation is needed.
 
 ## Supported endpoints
 

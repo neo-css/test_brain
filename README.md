@@ -58,6 +58,42 @@ npm run build
 npm run preview
 ```
 
+## Nginx 内网部署
+
+这个项目的 ted-sbrain 客户端支持两种模式：
+
+- 直接请求绝对后端地址
+- 请求同源 `/ted-sbrain/...`，再由代理层转发
+
+浏览器内网部署推荐第二种。原因是当前客户端默认会把空的 `VITE_TED_SBRAIN_API_BASE_URL` 解释成同源路径，生成 `/ted-sbrain/...` 请求；如果把它配置成 `http://172.21.126.221:49152` 这样的绝对地址，浏览器会把它当成跨域请求，后端没有返回 `Access-Control-Allow-Origin` 时就会被拦截。
+
+推荐做法：
+
+1. 构建前显式清空 `VITE_TED_SBRAIN_API_BASE_URL`
+2. 让 Nginx 代理 `/ted-sbrain/` 到真实后端
+
+```bash
+VITE_TED_SBRAIN_API_BASE_URL= npm run build
+```
+
+```nginx
+location / {
+    root /srv/test_brain/dist;
+    try_files $uri $uri/ /index.html;
+}
+
+location /ted-sbrain/ {
+    proxy_pass http://172.21.126.221:49152;
+    proxy_http_version 1.1;
+    proxy_set_header Host $host;
+    proxy_set_header X-Real-IP $remote_addr;
+    proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+    proxy_set_header X-Forwarded-Proto $scheme;
+}
+```
+
+部署后在浏览器里确认接口地址是 `http://前端域名/ted-sbrain/...`，而不是 `http://172.21.126.221:49152/...`。如果仍然看到后者，说明前端包是带着旧的 Vite 环境变量构建出来的，需要重新构建并重新发布。
+
 ## 目录结构
 
 ```
